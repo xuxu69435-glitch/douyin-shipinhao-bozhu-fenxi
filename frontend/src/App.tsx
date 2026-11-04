@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { apiRequest, connectBackend, type TaskStatus, type TaskView } from './api';
+import { apiRequest, connectBackend, type Evidence, type TaskStatus, type TaskView } from './api';
+import VideoLibrary from './VideoLibrary';
+import ReportPage from './ReportPage';
 
 type View = 'tasks' | 'videos' | 'reports';
 
@@ -18,6 +20,7 @@ export default function App() {
   const [limit, setLimit] = useState<10 | 30>(10);
   const [tasks, setTasks] = useState<TaskView[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [targetEvidence, setTargetEvidence] = useState<Evidence | null>(null);
   const [ready, setReady] = useState(false);
   const [warning, setWarning] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -77,7 +80,7 @@ export default function App() {
           <button className={view === 'videos' ? 'nav active' : 'nav'} onClick={() => setView('videos')}>视频与字幕 <span>M1</span></button>
           <button className={view === 'reports' ? 'nav active' : 'nav'} onClick={() => setView('reports')}>博主报告 <span>M2</span></button>
         </nav>
-        <div className="sidebar-bottom"><span className={ready ? 'dot online' : 'dot'} />{ready ? '本地后端已连接' : '等待本地后端'}<p>R0 → M0 · 开发版本</p></div>
+        <div className="sidebar-bottom"><span className={ready ? 'dot online' : 'dot'} />{ready ? '本地后端已连接' : '等待本地后端'}<p>R0 → M2 · 开发版本</p></div>
       </aside>
       <main>
         <header className="topline"><div>Douyin Analyst <span>/ 本地桌面</span></div><span>数据留在本机 · 仅分析有权访问的内容</span></header>
@@ -89,7 +92,7 @@ export default function App() {
             <textarea id="source" value={input} onChange={event => setInput(event.target.value)} placeholder="粘贴 https://www.douyin.com/user/... 或作品链接" rows={3} />
             <div className="create-controls"><div className="limit-group"><span>博主视频数量</span><button className={limit === 10 ? 'chip selected' : 'chip'} onClick={() => setLimit(10)}>最近10条</button><button className={limit === 30 ? 'chip selected' : 'chip'} onClick={() => setLimit(30)}>最近30条</button></div>
               <button className="primary" disabled={!ready || submitting || !input.trim()} onClick={() => void createTask()}>{submitting ? '正在创建…' : '创建任务'} <span aria-hidden="true">↗</span></button></div>
-            <p className="disclaimer">当前为M0工程骨架。未通过真实采集验收前，任务将明确显示为“等待采集验收”，不会生成虚假的分析结果。</p>
+            <p className="disclaimer">分析与报告模块已具备独立验证入口。真实抖音采集仍需R0验收；在此之前新建任务将明确显示为“等待采集验收”。</p>
           </section>
           <section className="history"><div className="section-heading"><h2>历史任务</h2><span>{tasks.length} 项</span></div>
             {tasks.length === 0 ? <div className="empty">暂无任务。先创建一个视频或博主分析任务。</div> : <div className="task-list">
@@ -105,7 +108,7 @@ export default function App() {
             </div>}
             {active && <p className="tip">已选任务：{active.id}</p>}
           </section>
-        </> : <section className="placeholder"><div className="eyebrow">{view === 'videos' ? 'MILESTONE 01' : 'MILESTONE 02'}</div><h1>{view === 'videos' ? '视频与字幕' : '博主分析报告'}</h1><p>{view === 'videos' ? '此页面在M1实现：视频播放器、带时间戳字幕及证据跳转。' : '此页面在M2实现：跨视频统计、主体归属检查和原始证据链接。'}</p><button className="plain" onClick={() => setView('tasks')}>返回任务中心</button></section>}
+        </> : view === 'videos' ? <VideoLibrary ready={ready} targetEvidence={targetEvidence} /> : <ReportPage ready={ready} tasks={tasks} onEvidence={(ref) => { setTargetEvidence(ref); setView('videos'); }} />}
       </main>
     </div>
   );

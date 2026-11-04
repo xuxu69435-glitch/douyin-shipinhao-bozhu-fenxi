@@ -70,3 +70,114 @@ export async function apiRequest<T>(path: string, method = 'GET', payload?: unkn
   }
   return (await res.json()) as T;
 }
+
+export type VideoView = {
+  id: string;
+  platform: string;
+  platform_video_id: string;
+  author_platform_id: string;
+  title: string;
+  source_url: string;
+  processing_status: string;
+  media_sha256: string | null;
+};
+
+export type VideoDetail = {
+  video: VideoView;
+  transcript_versions: string[];
+  analyses: { analysis_version: string; transcript_version: string; model_id: string; created_at: string }[];
+};
+
+export type TranscriptSegment = {
+  video_id: string;
+  transcript_version: string;
+  segment_id: number;
+  start_ms: number;
+  end_ms: number;
+  text: string;
+  model_version: string;
+};
+
+export type Evidence = {
+  video_id: string;
+  transcript_version: string;
+  segment_id: number;
+  start_ms: number;
+  end_ms: number;
+  source_url?: string;
+};
+
+export type Statement = {
+  text: string;
+  speaker_role: string;
+  attribution_basis: string;
+  creator_identity_verified: boolean;
+  evidence: Evidence[];
+};
+
+export type VideoInsight = {
+  summary: string;
+  summary_evidence: Evidence[];
+  primary_domain: string;
+  secondary_topics: string[];
+  content_format: string;
+  key_claims: Statement[];
+  explicitly_stated_preferences: Statement[];
+  provenance: 'real_model' | 'test_fixture';
+};
+
+export type ReportMeta = {
+  id: string;
+  task_id: string;
+  report_version: string;
+  evidence_version: string;
+  created_at?: string;
+};
+
+export type ReportRow = {
+  name: string;
+  count: number;
+  percentage: number;
+  evidence: Evidence[];
+};
+
+export type CreatorReport = {
+  schema_version: string;
+  provenance: 'real_model' | 'test_fixture';
+  summary: string;
+  creator_platform_id: string;
+  sample: {
+    requested_limit: number;
+    collected_count: number;
+    analyzed_count: number;
+    failed_count: number;
+    no_speech_count: number;
+    unanalysed_count: number;
+    stop_reason: string | null;
+  };
+  main_directions: ReportRow[];
+  topic_tendencies: ReportRow[];
+  frequently_discussed_entities: ReportRow[];
+  creator_preferences_verified: Statement[];
+  preferences_not_attributed_to_creator: Statement[];
+  business_claim: string | null;
+};
+
+export async function exportTextFile(path: string): Promise<void> {
+  const data = await apiRequest<{ filename: string; content: string }>(path);
+  const safeName = data.filename.replace(/[\\/:*?"<>|]/g, '_');
+  const blob = new Blob([data.content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = safeName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function getDesktopMediaUrl(videoId: string): Promise<string | null> {
+  if (!desktopMode) return null;
+  return await invoke<string>('backend_media_url', { videoId });
+}

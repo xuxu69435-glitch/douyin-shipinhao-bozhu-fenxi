@@ -53,3 +53,34 @@ class VideoInsight(BaseModel):
     key_claims: list[str]
     explicitly_stated_preferences: list[str]
     citations: list[EvidenceRef]
+
+
+class VideoView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    platform: str
+    platform_video_id: str
+    author_platform_id: str
+    title: str
+    source_url: str
+    processing_status: str
+    media_sha256: str | None
+
+
+class SegmentView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    video_id: str
+    transcript_version: str
+    segment_id: int
+    start_ms: int
+    end_ms: int
+    text: str
+    model_version: str
+
+
+class SubtitleExport(BaseModel):
+    filename: str
+    content: str
+    format: Literal["srt", "vtt"]

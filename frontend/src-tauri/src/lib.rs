@@ -1,6 +1,9 @@
 use std::fs;
 use std::net::TcpListener;
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
 
 use std::time::Duration;
 use tauri::{Manager, State};
@@ -50,6 +53,23 @@ async fn backend_request(
         return Err(format!("HTTP {}: {}", status, value.get("detail").and_then(|x| x.as_str()).unwrap_or("request failed")));
     }
     Ok(value)
+}
+
+#[tauri::command]
+fn backend_media_url(state: State<'_, BackendState>, video_id: String) -> Result<String, String> {
+    if uuid::Uuid::parse_str(&video_id).is_err() {
+        return Err("invalid video ID".to_string());
+    }
+    let expires = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_secs() + 600;
+    let mut mac = Hmac::<Sha256>::new_from_slice(state.connection.token.as_bytes())
+        .map_err(|e| e.to_string())?;
+    mac.update(format!("{}:{}", video_id, expires).as_bytes());
+    let signature = hex::encode(mac.finalize().into_bytes());
+    Ok(format!("{}/media/{}?expires={}&signature={}",
+        state.connection.base_url, video_id, expires, signature))
 }
 
 fn stop_backend(handle: &tauri::AppHandle) {
@@ -108,7 +128,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![backend_request])
+        .invoke_handler(tauri::generate_handler![backend_request, backend_media_url])
         .build(tauri::generate_context!())
         .expect("failed to build Tauri application")
         .run(|app, event| {

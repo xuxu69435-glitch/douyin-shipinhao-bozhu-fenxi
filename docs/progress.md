@@ -1,57 +1,45 @@
-# Development status — 2026-11-04
+# 开发记录 — 2026-11-04
 
-Scope: Windows local, Douyin only. Status labels are literal; "implemented" != "Windows-verified".
+范围：仅抖音，Windows本地Tauri 2桌面应用。**“代码已实现”≠“真实抖音通过”≠“Windows安装包通过”。**
 
-## R0: GitHub research + real collection feasibility
+## 阶段验收矩阵
 
-- [x] Read actual GitHub source files, LICENSE, configuration and issue #435 in F2, BiliNote, MediaCrawler, faster-whisper, Douyin API.
-- [x] Inspect Tauri's official sidecar docs and Douyin OAuth video-list scope.
-- [x] Choose F2 as a **candidate**, implement SDK boundary and pure pagination rules.
-- [x] Build `scripts/live_douyin_probe.py` for real page-two, author and media validation when permitted access becomes available.
-- [ ] **REAL** Douyin profile author verified on an authorized sample. `NOT RUN`.
-- [ ] **REAL** video link author verified on an authorized sample. `NOT RUN`.
-- [ ] **REAL** second page has distinct works; successful HTTP video sample and FFprobe. `NOT RUN`.
-- Blocker: sandbox has no external network DNS (`github.com` cannot resolve from shell) and no permitted live Douyin URLs/session. GitHub content review worked via connected GitHub service, but does not validate Douyin endpoints.
-- Research document: [`research/github-review.md`](research/github-review.md).
+| 阶段 | 已实施并可核对 | 自动化结果 | 仍不通过/缺失 |
+| --- | --- | --- | --- |
+| **R0：GitHub调研、F2可行性** | GitHub真实源码、版本commit、许可证、关键文件及官方文档调研；F2接口适配器、分页去重逻辑；独立真实探针脚本 | 合成分页、链接安全测试通过 | **真实抖音主页作者、视频作者、第二页新作品、媒体FFprobe均未实测；R0验收未通过** |
+| **M0：工程骨架** | SQLite/SQLAlchemy、FastAPI令牌API、单Worker状态机、Tauri Rust Sidecar及React任务UI、Windows打包脚本 | 后端自动化覆盖任务状态、重启恢复、异常和SQLite持久化 | Rust/Tauri/Node依赖缺失；React无法完成依赖安装与完整构建；Windows Sidecar与NSIS未验证 |
+| **M1：单视频处理** | F2单视频作者归属接口；允许域名媒体下载与FFprobe；FFmpeg抽音；faster-whisper可选真实引擎；OpenAI兼容真实HTTP请求；Pydantic输出、字幕ID交叉校验和版本化复用；API SRT/VTT；Tauri签名媒体播放URL、Range响应；视频详情UI、字幕跳转 | 真实本地FFmpeg、测试替身ASR/LLM、HTTP API、非法引用拒绝、缓存重试、签名票据测试均通过 | 尚未安装并运行真实faster-whisper；未调用真实LLM；未从抖音实际下载；Tauri播放器真机运行未验收 |
+| **M2：博主批量报告** | 可显式启用的F2单Worker流程；视频10/30上限、持久任务阶段、同ID去重及失败统计；领域/主题程序计算占比、别名归一；引用/说话人归属保守策略；带来源的JSON/Markdown报告；前端报告页面和报告到字幕定位 | 测试替身采集的两条视频和部分失败场景，真实FFmpeg媒体生成，假ASR/LLM，数据库报告闭环 | 真实博主作品分页、真实批量ASR/LLM和分析准确率未验证；主营业务判定始终保守留空，不编造 |
+| **M3：LangGraph审查** | 确定按已有字幕和报告审查、限制调用与预算，不扩充采集范围 | 未测试 | **尚未实现**。前面的真实验收与依赖未满足 |
+| **M4：Windows交付** | PowerShell打包脚本与Rust外部二进制配置存在 | 后端本地测试结果如下 | **没有Windows安装包或打包验收**。缺Rust、Node依赖和Windows构建环境 |
 
-## M0: Engineering skeleton
+## 本轮实际执行证据
 
-- [x] Create new standalone directory instead of editing unknown Windows repository.
-- [x] FastAPI 0.1.0 with token-protected `/api/health`, create/list/get tasks and pause/resume/cancel.
-- [x] Parse Douyin full profile, full video and shortened links; reject unrelated hosts.
-- [x] SQLite SQLAlchemy task, video, task-video, transcript-segment, analysis-version and report-version schemas.
-- [x] Single Python Worker with cooperative pause/cancel, persisted failures, restart-state reconciliation and explicit `blocked` state when R0 is not accepted.
-- [x] React 18 + TypeScript + Vite task screen, history list and failure details; M1/M2 screens labelled as placeholders.
-- [x] Tauri 2 Rust code, PyInstaller Windows script, random local port, per-launch session secret, Rust-only Sidecar control, token-protected Rust API proxy and exit kill.
-- [x] Real local FFmpeg synthetic-media probe/extraction smoke test; not a live Douyin test.
-- [x] Python automated backend test suite: **35 passed** in this execution environment. Command: `cd backend && python -m pytest -q` (Python 3.13.5, Linux). See `testing/backend-pytest.txt`.
-- [ ] Frontend `npm install`, `npm run build`: `NOT RUN` (no npm network/cache).
-- [ ] Rust/Tauri `cargo check`, Windows desktop start/exit, bundled sidecar smoke: `NOT RUN` (no Rust toolchain and this container is Linux).
-- [ ] Python **3.12** execution: `NOT RUN` (this execution environment is Python 3.13.5).
-- [ ] Sidecar shutdown and Windows installer persistence: `NOT RUN`.
-- [ ] Real F2/ASR/LLM request pipeline: deliberately not enabled in M0.
+- OS/Python：Linux容器，Python **3.13.5**；目标Python 3.12仍需在Windows运行。
+- 后端测试：`cd backend && python -m pytest -q -o addopts=''`，**50 passed**，见 [`testing/backend-pytest.txt`](testing/backend-pytest.txt)。
+- FFmpeg：`ffmpeg 7.1.5`，运行媒体生成、FFprobe、FFmpeg音轨抽取、媒体HTTP Range。ASR和LLM均使用标记为`test_fixture`的测试替身，**不能算作真实模型测试**。
+- TypeScript：全局TS `transpileModule`仅验证4个TS/TSX文件**语法**，0语法错误。`npm install --offline`失败`ENOTCACHED`；`npm run build`因缺React/Vite/Tauri依赖而失败。详情：[`testing/frontend-build.md`](testing/frontend-build.md)。
+- Rust/Cargo/NSIS：未运行，本容器没有相应工具链和Windows环境。
+- 外网：GitHub通过连接器读取；Linux shell无法解析`github.com`和`registry.npmjs.org`，无法执行实网抖音端点调用；用户未提供合法可访问样本/会话。没有伪造真实平台结果。
 
-## M1 — pending after R0/M0 acceptance
+## 代码控制与真实采集门槛
 
-Implement the real collection → permitted media download → FFprobe → FFmpeg → faster-whisper → Pydantic-validated LLM analysis pipeline. Anchor evidence using `(video_id, transcript_version, segment_id)` and verify claimed timestamps against stored spans. Add video details, media playback, transcript export and failure-stage persistence.
+- 默认`create_app`的Worker是`missing_collector`，新建任务会如实进入`blocked`。
+- **仅当用户自主在本机明确配置**`ANALYST_ENABLE_LIVE=1`、模型三项`OPENAI_BASE_URL`/`OPENAI_API_KEY`/`OPENAI_MODEL`，并安装F2/ASR依赖后才建立真实处理Worker。设置此环境变量**不等于**R0通过，也不保证平台接口可用。
+- 可自行提供受平台规则允许的Cookie文件路径`ANALYST_DOUYIN_COOKIE_FILE`；不会从浏览器自动收集登录态，也不会打包该文件。
+- `scripts/live_douyin_probe.py`是R0手工真实验收入口；`scripts/analyze_local_video.py`是**真实本地媒体→Whisper→真实LLM**独立入口。均不得将测试替身结果作为实测证据。
+- 审核主体归属：模型说“creator”时也暂不设置`creator_identity_verified=true`；程序不会据此断言博主个人喜好。主营业务无公开核实证据则不推断。
+- 报告/字幕导出时重新验证数据库对应的字幕版本、视频与时间范围；来源删除或修改则返回HTTP 409，不返回看似有效的旧证据。
 
-## M2 — pending
+## 下一阶段精确入口
 
-Paginated creator history (10/30), stable IDs, task-video records, per-item failure counts, canonical themes, programmatic ratios, nuanced subject/speaker attribution, business inference only with explicit evidence and report export.
+1. 将本独立工程移入实际Windows仓库前，先在目标仓库运行`git status`和检查现有分支，避免覆盖你的已有改动。本容器无法直接查看Windows磁盘。
+2. Python 3.12安装依赖：`python -m pip install -e ".\\backend[test,collector-f2,asr,packaging]"`，运行50项测试。使用经过允许的真实主页、作品链接运行`live_douyin_probe.py`，保存去敏的`docs/testing/live-r0.json`。**只有主页作者+视频作者+第二页不同ID+本地视频FFprobe均为真，R0才可标为通过。**
+3. 真实ASR/LLM：用有权处理的本地MP4运行`analyze_local_video.py`，检查字幕段时间、证据Pydantic校验、API结果和费用；确认实际模型ID、权重、语言效果。
+4. Windows：`scripts/build-sidecar.ps1`、`cd frontend && npm install && npm run build && npm run tauri:dev`；重点验证全量可选依赖是否正确打包、后端自动启动/退出与不存在孤儿进程、端口冲突、签名媒体播放、数据持久化，最后执行`npm run tauri:build`。当前脚本可能需要增加PyInstaller隐藏依赖/权重和FFmpeg打包支持，**尚未验证完整安装包**。
+5. R0、M1、M2真实验收后再实现与运行M3 LangGraph审查Agent：检索范围限定已存字幕，限制工具、模型请求、重分析次数、总token预算；每次审查修订必须保存引用和审计日志。
 
-## M3 — pending
+## Git记录
 
-LangGraph bounded evidence-review Agent, step/tool/budget limits, audit decisions and resumable task checkpoints. No expanded collection by Agent.
-
-## M4 — pending
-
-Windows 11 PyInstaller bundle + `npm run tauri:build`, signed/installer tests if available, model config, media playback, restart persistence, clean Sidecar exit, packaging licenses, and real sample performance/accuracy evaluation.
-
-## Next entry (exact commands)
-
-1. On Windows, inspect your **real existing repo** with `git status --short`, branch and file tree before merging any scaffold files; this sandbox cannot inspect that machine.
-2. Create Python 3.12 environment and run the 35 backend tests, followed by `scripts/live_douyin_probe.py` on authorized public samples. Preserve real outputs as `docs/testing/live-r0.json` without credentials or signed media URLs.
-3. Install frontend dependencies, build Windows Sidecar using `scripts/build-sidecar.ps1`, then run `npm run tauri:dev` and `npm run tauri:build`. Verify process termination from Task Manager after closing the desktop app.
-4. Only when R0 live collection and M0 packaging both pass, wire the F2 adapter into the single Worker and proceed to M1.
-
-**Repository caveat:** Connected GitHub account returned no writable user project repository, and no Windows workspace was mounted. These commits, if present, belong only to the generated standalone scaffold, not a user's existing repository or remote.
+- `R0 M0`本地独立代码基线已经提交。后续增量有本地提交记录；**并未推送到用户原有GitHub仓库**。
+- 用户原仓库未挂载，本项目是完全独立、可交给Codex导入或继续开发的源码工程。

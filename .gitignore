@@ -17,3 +17,5 @@ frontend/src-tauri/binaries/*-x86_64-*
 frontend/src-tauri/binaries/*-aarch64-*
 .secrets/
 .media/
+
+*.tsbuildinfo

@@ -1,5 +1,6 @@
 """PyInstaller entry point. Tauri controls port, auth token and data directory."""
 
+import os
 import uvicorn
 
 from app.config import Settings
@@ -9,7 +10,8 @@ from app.main import create_app
 def main():
     settings = Settings.from_env()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
-    app = create_app(settings.data_dir, settings.backend_token)
+    app = create_app(settings.data_dir, settings.backend_token,
+                     enable_live=os.getenv("ANALYST_ENABLE_LIVE") == "1")
     uvicorn.run(app, host="127.0.0.1", port=settings.backend_port, workers=1, access_log=False)
 
 

@@ -105,7 +105,12 @@ class SingleWorker:
                     task = session.get(TaskRecord, task_id)
                     if task:
                         task.status = {"cancelling": "cancelled", "pausing": "paused"}.get(task.status, "completed")
-                        task.stop_reason = "user_cancelled" if task.status == "cancelled" else ("user_paused" if task.status == "paused" else "finished")
+                        if task.status == "cancelled":
+                            task.stop_reason = "user_cancelled"
+                        elif task.status == "paused":
+                            task.stop_reason = "user_paused"
+                        elif not task.stop_reason:
+                            task.stop_reason = "finished"
             except TaskPaused:
                 self._set_state(task_id, "paused", "user_paused")
             except TaskCancelled:

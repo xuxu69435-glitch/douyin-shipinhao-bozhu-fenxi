@@ -11,7 +11,7 @@
   },
   "app": {
     "windows": [{ "title": "抖音博主内容分析", "width": 1280, "height": 850, "minWidth": 920, "minHeight": 640 }],
-    "security": { "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'" }
+    "security": { "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' data:; media-src 'self' blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'" }
   },
   "bundle": {
     "active": true,
