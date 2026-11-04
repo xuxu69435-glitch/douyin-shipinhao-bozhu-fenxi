@@ -1,4 +1,16 @@
 :root { font-family: Inter, "Segoe UI", "Microsoft YaHei UI", sans-serif; font-synthesis: none; color: #26332e; background: #f8f6f0; }
+input, select { font: inherit; }
+.settings-page { padding-top: 45px; max-width: 760px; }
+.settings-page h1 { font-size: 32px; }
+.settings-form { background: #fffefa; border: 1px solid #e8e5da; border-radius: 12px; padding: 26px; margin-top: 24px; }
+.settings-form label { display: block; font-size: 14px; margin-bottom: 22px; }
+.settings-form label small { color: #869688; font-size: 11px; margin-left: 8px; }
+.settings-form label > input:not([type=checkbox]) { display: block; margin-top: 9px; width: 100%; border: 1px solid #cdd8cd; background: white; padding: 11px; border-radius: 6px; }
+.settings-form label span { display: block; font-size: 11px; color: #7f8e82; margin-top: 7px; line-height: 1.7; }
+.settings-form label.checkbox { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.runtime-checks { margin-top: 25px; font-size: 13px; line-height: 1.8; }
+.runtime-checks h2 { font-size: 18px; }.runtime-checks code { overflow-wrap: anywhere; }
+.success { border: 1px solid #aac8ac; background: #edf6ea; padding: 13px; border-radius: 8px; color: #365e39; font-size: 13px; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 button, textarea { font: inherit; }

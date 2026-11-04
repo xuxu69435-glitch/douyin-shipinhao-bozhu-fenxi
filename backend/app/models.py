@@ -106,4 +106,18 @@ class CreatorReport(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
+class AnalysisRun(Base):
+    __tablename__ = "analysis_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    video_id: Mapped[str] = mapped_column(ForeignKey("videos.id", ondelete="CASCADE"), index=True)
+    analysis_version: Mapped[str] = mapped_column(String(80))
+    model_id: Mapped[str] = mapped_column(String(200))
+    provenance: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), default="running")
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
 Index("ix_segments_lookup", TranscriptSegment.video_id, TranscriptSegment.transcript_version, TranscriptSegment.start_ms)

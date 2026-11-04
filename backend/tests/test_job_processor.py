@@ -145,3 +145,31 @@ def test_errors_are_redacted():
     safe = safe_error(exc)
     assert "secret123" not in safe
     assert "abcd" not in safe
+
+
+def test_completed_media_can_be_reused_when_new_cdn_address_is_missing(tmp_path):
+    from dataclasses import replace
+    from app.models import AnalysisRun
+    class NoMediaAddress(ProviderFixture):
+        async def author_works(self, author_id, max_videos):
+            works = await super().author_works(author_id, max_videos)
+            return replace(works, videos=[replace(video, media_url=None) for video in works.videos])
+    token = "test-reuse-xxxxxxx-yyyyyyyyy-zzzzzzz"
+    headers = {"X-Analyst-Token": token}
+    app = create_app(tmp_path, token)
+    factory = app.state.session_factory
+    app.state.worker.processor = LiveTaskProcessor(factory, tmp_path, ProviderFixture(),
+        ASRFixture(), LLMFixture(), fake_media_download, provenance="test_fixture")
+    with TestClient(app) as client:
+        first = client.post('/api/tasks', headers=headers,
+                            json={'input_text': f'https://www.douyin.com/user/{AUTHOR}'}).json()
+        assert until_done(client, headers, first['id'])['status'] == 'completed'
+        with factory() as session:
+            original_runs = len(session.scalars(select(AnalysisRun)).all())
+        app.state.worker.processor.provider = NoMediaAddress()
+        second = client.post('/api/tasks', headers=headers,
+                             json={'input_text': f'https://www.douyin.com/user/{AUTHOR}'}).json()
+        completed = until_done(client, headers, second['id'])
+        assert completed['status'] == 'completed' and completed['success_count'] == 2
+        with factory() as session:
+            assert len(session.scalars(select(AnalysisRun)).all()) == original_runs

@@ -15,23 +15,24 @@ from app.models import TranscriptSegment  # ensure all tables registered
 from app import models  # noqa: F401
 from app.pipeline import analyze_local_file
 from app.transcription import FasterWhisperTranscriber
+from app.runtime_settings import load_runtime_settings
 
 
 def main():
     parser = argparse.ArgumentParser(description="True local ASR + LLM with persisted evidence")
     parser.add_argument("path", type=Path, help="local MP4/MOV/MKV with permission to analyze")
-    parser.add_argument("--data-dir", type=Path, default=Path.home() / ".douyin-analyst-dev")
-    parser.add_argument("--whisper-model", default="small")
+    parser.add_argument("--data-dir", type=Path,
+                        default=Path(os.getenv("LOCALAPPDATA") or Path.home() / ".local" / "share") / "com.douyinanalyst.desktop")
+    parser.add_argument("--whisper-model")
     args = parser.parse_args()
-    generator = OpenAICompatibleInsightGenerator(
-        os.getenv("OPENAI_BASE_URL", ""), os.getenv("OPENAI_API_KEY", ""),
-        os.getenv("OPENAI_MODEL", ""),
-    )
+    configuration = load_runtime_settings(args.data_dir)
+    generator = OpenAICompatibleInsightGenerator(configuration.OPENAI_BASE_URL,
+        configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else "", configuration.OPENAI_MODEL)
     factory, engine = build_session_factory(args.data_dir)
     try:
         result = asyncio.run(analyze_local_file(
             args.path, factory, args.data_dir / "tmp",
-            FasterWhisperTranscriber(model_name=args.whisper_model), generator,
+            FasterWhisperTranscriber(model_name=args.whisper_model or configuration.whisper_model), generator,
         ))
         print(json.dumps(result.__dict__, ensure_ascii=False, indent=2))
     finally:

@@ -5,7 +5,7 @@ export type TaskStatus = 'queued' | 'running' | 'pausing' | 'paused' | 'blocked'
 export type TaskView = {
   id: string;
   source_url: string;
-  source_kind: 'video' | 'profile' | 'short';
+  source_kind: 'video' | 'profile' | 'short' | 'local';
   platform_id: string | null;
   max_videos: number;
   status: TaskStatus;
@@ -105,6 +105,7 @@ export type Evidence = {
   start_ms: number;
   end_ms: number;
   source_url?: string;
+  analysis_version?: string;
 };
 
 export type Statement = {
@@ -166,6 +167,10 @@ export type CreatorReport = {
 export async function exportTextFile(path: string): Promise<void> {
   const data = await apiRequest<{ filename: string; content: string }>(path);
   const safeName = data.filename.replace(/[\\/:*?"<>|]/g, '_');
+  if (desktopMode) {
+    await invoke('save_export', { filename: safeName, content: data.content });
+    return;
+  }
   const blob = new Blob([data.content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -176,6 +181,22 @@ export async function exportTextFile(path: string): Promise<void> {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export async function selectLocalVideo(): Promise<string | null> {
+  if (!desktopMode) throw new Error('本地文件选择请使用桌面应用。');
+  return await invoke<string | null>('select_local_video');
+}
+
+export type RuntimeSettingsView = {
+  OPENAI_BASE_URL: string; OPENAI_MODEL: string; api_key_configured: boolean;
+  api_key_encrypted: boolean; enable_live: boolean; cookie_file: string;
+  whisper_model: string; data_dir: string;
+};
+
+export type Diagnostics = {
+  ffmpeg: boolean; ffprobe: boolean; data_dir: string; agent_enabled: boolean;
+  packages: { f2: string | null; 'faster-whisper': string | null };
+};
 
 export async function getDesktopMediaUrl(videoId: string): Promise<string | null> {
   if (!desktopMode) return null;

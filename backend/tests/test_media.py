@@ -36,6 +36,17 @@ def test_video_without_audio(tmp_path):
     ], check=True, capture_output=True, timeout=45)
     assert extract_audio(video, tmp_path / "none.wav") is None
 
+
+@pytest.mark.skipif(not (shutil.which("ffmpeg") and shutil.which("ffprobe")), reason="FFmpeg not installed")
+def test_chinese_video_path_and_utf8_metadata(tmp_path):
+    video = tmp_path / "中文视频.mp4"
+    subprocess.run([
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+        "-f", "lavfi", "-i", "color=c=black:s=80x80:r=5:d=1",
+        "-c:v", "mpeg4", "-metadata", "title=中文标题", str(video)
+    ], check=True, capture_output=True, timeout=45)
+    assert probe_media(video)["format"]["tags"]["title"] == "中文标题"
+
 @pytest.mark.parametrize("url,allowed", [
     ("https://v3.douyinvod.com/path", True),
     ("https://www.douyin.com/aweme/v1/play", True),

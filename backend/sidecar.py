@@ -12,7 +12,10 @@ def main():
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     app = create_app(settings.data_dir, settings.backend_token,
                      enable_live=os.getenv("ANALYST_ENABLE_LIVE") == "1")
-    uvicorn.run(app, host="127.0.0.1", port=settings.backend_port, workers=1, access_log=False)
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=settings.backend_port,
+                                         workers=1, access_log=False, timeout_graceful_shutdown=2))
+    app.state.request_shutdown = lambda: setattr(server, "should_exit", True)
+    server.run()
 
 
 if __name__ == "__main__":

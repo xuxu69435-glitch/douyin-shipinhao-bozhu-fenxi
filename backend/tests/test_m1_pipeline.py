@@ -14,7 +14,7 @@ from app.database import build_session_factory
 from app.evidence import milliseconds_to_srt, subtitles_text
 from app.insights import EvidenceIntegrityError, anchor_insight
 from app.main import create_app
-from app.models import TranscriptSegment, VideoAnalysis, VideoRecord
+from app.models import TranscriptSegment, VideoAnalysis, VideoRecord, AnalysisRun
 from app.pipeline import analyze_local_file
 from app.transcription import AsrSegment, AsrResult, normalize_asr_segments
 
@@ -126,6 +126,9 @@ def test_local_video_real_ffmpeg_fake_asr_llm_caches_versions(tmp_path):
             assert row.result["explicitly_stated_preferences"][0]["creator_identity_verified"] is False
             assert row.result["secondary_topics"] == ["AI工具", "技术应用"]
             assert session.scalar(select(VideoRecord)).platform == "test_fixture"
+            runs = session.scalars(select(AnalysisRun)).all()
+            assert len(runs) == 1 and runs[0].status == "completed"
+            assert runs[0].provenance == "test_fixture"
     finally:
         engine.dispose()
 
@@ -142,10 +145,14 @@ def test_invalid_llm_claim_preserves_asr_and_can_retry(tmp_path):
             assert len(session.scalars(select(TranscriptSegment)).all()) == 2
             assert not session.scalars(select(VideoAnalysis)).all()
             assert session.scalar(select(VideoRecord)).processing_status == "analysis_failed"
+            failed_run = session.scalar(select(AnalysisRun))
+            assert failed_run.status == "failed" and failed_run.error_code == "EvidenceIntegrityError"
         result = asyncio.run(analyze_local_file(media_file(tmp_path), factory, tmp_path / "work",
                                                 asr, FakeLLM(), "test_fixture"))
         assert result.status == "analyzed" and result.reused_transcript is True
         assert asr.calls == 1
+        with factory() as session:
+            assert {run.status for run in session.scalars(select(AnalysisRun))} == {"failed", "completed"}
     finally:
         engine.dispose()
 
@@ -158,6 +165,25 @@ def test_local_silent_video_reports_no_audio(tmp_path):
                                                   tmp_path / "work", asr, llm, "test_fixture"))
         assert outcome.status == "no_speech" and outcome.transcript_version is None
         assert asr.calls == 0 and llm.calls == 0
+    finally:
+        engine.dispose()
+
+
+def test_cancelled_analysis_is_audited_and_transcript_can_resume(tmp_path):
+    class CancelledLLM(FakeLLM):
+        async def generate(self, _segments):
+            raise asyncio.CancelledError()
+    factory, engine = build_session_factory(tmp_path / "db")
+    asr = FakeASR()
+    path = media_file(tmp_path)
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(analyze_local_file(path, factory, tmp_path / "work", asr, CancelledLLM(), "test_fixture"))
+        with factory() as session:
+            assert session.scalar(select(AnalysisRun)).status == "interrupted"
+            assert len(session.scalars(select(TranscriptSegment)).all()) == 2
+        resumed = asyncio.run(analyze_local_file(path, factory, tmp_path / "work", asr, FakeLLM(), "test_fixture"))
+        assert resumed.reused_transcript and asr.calls == 1
     finally:
         engine.dispose()
 

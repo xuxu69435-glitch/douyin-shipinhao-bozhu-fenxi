@@ -1,93 +1,82 @@
-# 抖音博主内容分析智能体 — 可继续开发的独立源码工程
+# 抖音博主内容分析
 
-**版本：2026-11-04 R0研究 + M0骨架 + M1/M2可测试实现。** 本工程不是已完成安装的Windows产品；真实抖音采集、真实Whisper/LLM调用、Windows Tauri编译和安装包尚未验证。测试不能替代这些验收。
+Windows 本地桌面应用：Tauri 2 + React + Python 3.12 / FastAPI + SQLite，支持任务管理、本地视频分析、可选抖音采集、字幕与证据定位、博主报告导出。
 
-## 已有能力
+当前已有可构建的 Windows 安装版及离线桌面生命周期验证。**真实抖音、真实 Whisper 推理和大模型分析质量仍由用户用真实样本验收，不能用自动化测试代替。** LangGraph 审查 Agent 按用户决定暂缓，先使用固定分析流程与轻量 harness。
 
-- **桌面**：Tauri 2 + React 18 + TypeScript + Vite，任务中心、视频与带时间戳的字幕/证据定位、博主统计报告及Markdown/JSON和SRT/VTT导出。Rust管理Python Sidecar的启动、退出和本机令牌认证。播放器通过10分钟有效期的签名URL和Range HTTP支持，尚待Windows真实播放测试。
-- **后端**：Python 3.12目标、FastAPI、Pydantic、SQLite/SQLAlchemy和单Worker；任务/视频阶段持久化，暂停、取消、恢复与重启状态收敛。
-- **采集**：F2可选SDK适配器，解析抖音主页/作品和分享短链，分页、作者校验、去重、10/30上限及失败记录。默认不开启真实采集；R0仍未获得真实验收样本。
-- **分析**：FFprobe、FFmpeg、faster-whisper接口、OpenAI兼容请求；由程序验证并生成不可伪造的`(video_id, transcript_version, segment_id, start_ms, end_ms)`证据锚点，模型不能直接指定视频ID和时间戳。模型说话人身份不会自动视为已认证的博主身份。
-- **报告**：程序统一领域/主题名、计算各视频频率与占比，跨视频整理有证据的观点和讨论对象。主营业务证据不足时明确留空；导出前重新校验引用完整性。
-- **可复现实验**：50项后端自动化测试已通过（Linux Python 3.13.5）。包含真实FFmpeg处理，但采集/ASR/LLM使用显式测试替身。
+## 开始使用
 
-最新矩阵请看[`docs/progress.md`](docs/progress.md)，GitHub源码及许可证核查请看[`docs/research/github-review.md`](docs/research/github-review.md)。开发承接说明见[`AGENTS.md`](AGENTS.md)。
-
-## 目录
+安装程序生成于：
 
 ```text
-backend/app/           API、SQLite、任务Worker、采集、媒体、ASR、LLM、证据、报告
-backend/tests/         单元/集成测试；采集和模型替身明确标注
-frontend/src/          React任务、视频/字幕、报告页面
-frontend/src-tauri/    Tauri 2 Rust Sidecar与带签名播放URL
-scripts/               真实抖音R0探针、本地视频分析、Windows Sidecar打包
-docs/                  调研、架构、进度、可复核测试日志
+frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.0_x64-setup.exe
 ```
 
-## Windows 11准备与开发运行
+启动应用，打开左侧 **模型与采集设置**：
 
-需在**用户本机**已安装Python 3.12、Node.js 20+、Rust/MSVC、Tauri 2所需WebView2工具链及FFmpeg/FFprobe。命令在PowerShell中从项目根目录运行：
+1. 填写 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL，点击“保存并测试 API”。地址通常以 /v1 结尾，不包含 /chat/completions。
+2. 填写 Whisper 模型名（默认 small）或已有本地模型目录。首次使用模型名需下载权重，语音识别在本机运行。
+3. 在任务中心点击“选择本地视频分析”，先独立测试字幕、摘要及证据。
+4. 需要测试抖音时，再自行开启真实采集开关，按需提供自己有权使用的 Cookie 文件路径。支持作品、主页和分享文本，博主上限 10/30 条。
+
+模型服务须兼容 Chat Completions、JSON mode 和 max_tokens。测试 API 会产生少量服务用量，不采集视频。API 密钥保存在本机数据目录，Windows 使用当前用户 DPAPI 加密，页面不回显，配置不进入 Git。分析字幕会发送给所配置的模型服务。
+
+详见 [API 接入与真实测试](docs/api-setup.md)、[实际进度](docs/progress.md)、[Harness 取舍](docs/research/harness-decision.md)。
+
+## 已实现
+
+- 任务创建、历史、阶段状态、暂停/取消/恢复与重启持久化。
+- 本地视频原生选择及导入，F2 可选采集边界、分页去重和稳定作品 ID。
+- 内置 FFmpeg/FFprobe，faster-whisper 可选权重推理，带时间戳及版本的字幕。
+- 真实兼容接口请求、有限重试、长字幕固定分段与汇总；每次执行最多 12 次请求，每次输出上限 4096 tokens。
+- Pydantic、字幕段引用和证据版本校验；报告到字幕定位及签名媒体 Range。
+- 领域/主题程序统计，明确区分说话人归属；公开证据不足时不推断主营业务或博主个人偏好。
+- Markdown/JSON 报告、SRT/VTT 字幕，通过原生保存对话框导出。
+- 模型设置和连接测试，Windows 密钥加密保存，分析执行记录保留调用次数与服务商返回的用量。
+- Rust 管理 Sidecar 与 Windows Job 进程树，NSIS 安装版包含 Python 运行库、采集/语音组件及本次构建选择的媒体工具；模型权重由用户另行下载。
+
+引用 ID 和 JSON 检查确认结构及材料存在性，不保证模型的语义结论正确。主体身份核实、通用主题同义归并、真实分析效果和界面中实际播放体验仍需样本测试。
+
+## 开发与测试
+
+需要 Python 3.12、Node 20+、Rust MSVC 工具链、Visual Studio C++ Build Tools / Windows SDK 及 WebView2。FFmpeg 用于测试和选择内置媒体工具的构建。
+
+本机已具备项目虚拟环境和工作区专用 Rust；构建脚本自动查找上一级 `.toolchains`，不修改系统 PATH。全新环境可使用 Python 自带 venv 和 pip：
 
 ```powershell
 py -3.12 -m venv backend\.venv
-.\backend\.venv\Scripts\python.exe -m pip install -e ".\backend[test,collector-f2,asr,packaging]"
+.\backend\.venv\Scripts\python.exe -m pip install -r backend\requirements-windows.lock
+.\backend\.venv\Scripts\python.exe -m pip install -e .\backend --no-deps
+```
+
+若虚拟环境由 uv 创建，用 `uv pip install --python backend\.venv\Scripts\python.exe` 安装上述依赖，无需假定环境内带有 pip。非 Windows 后端开发可安装 `backend[test]`，不要使用 Windows 专用锁文件。
+
+```powershell
 .\backend\.venv\Scripts\python.exe -m pytest -q -c backend\pyproject.toml backend\tests
-
-# 查看脚本，然后尝试Windows Sidecar打包（首次打包可能需要调整可选依赖收集）
-.\scripts\build-sidecar.ps1
 cd frontend
-npm install
+npm ci
 npm run build
-npm run tauri:dev
-# 开发/真实集成确认通过后，才执行：npm run tauri:build
+cd ..
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build-desktop.ps1 -BundleMediaTools
+.\backend\.venv\Scripts\python.exe scripts\smoke_desktop.py 'E:\安装目录\douyin-analyst-desktop.exe'
 ```
 
-默认任务**会明确进入`blocked`**，表示不允许把未验收抖音采集当成成功。普通源码测试无须实际平台请求。
+ExecutionPolicy 参数仅用于运行当前已审阅的本地脚本，不修改系统策略。`smoke_desktop.py` 使用独立 `.media/desktop-smoke` 数据目录及合成视频，不调用平台和模型；不等于 WebView 中的视频实际播放验收。
 
-## R0真实平台探针
-
-需要平台许可的真实主页/作品URL。以下是说明性的参数占位符，不是可运行的真实数据：
+## 真实验证入口
 
 ```powershell
-.\backend\.venv\Scripts\python.exe .\scripts\live_douyin_probe.py `
-  --profile "https://www.douyin.com/user/REAL_SEC_USER_ID" `
-  --video "https://www.douyin.com/video/REAL_VIDEO_ID" `
-  --media-dir ".media\r0" --output "docs\testing\live-r0.json"
+.\backend\.venv\Scripts\python.exe scripts\analyze_local_video.py 'E:\有权处理的视频.mp4'
+.\backend\.venv\Scripts\python.exe scripts\live_douyin_probe.py `
+  --profile 'https://www.douyin.com/user/真实主页ID' `
+  --video 'https://www.douyin.com/video/真实作品ID' `
+  --media-dir '.media\r0' --output 'docs\testing\live-r0.json'
 ```
 
-如需账号持有者合法提供的访问状态，可加`--cookie-file ".secrets\douyin-cookie.txt"`。不自动读取浏览器Cookie，不打包凭据，不绕过平台访问控制。只有实测作者ID、**真实第二页不同作品ID**和视频下载后**FFprobe成功**，才能认定R0通过。仅运行代码级分页测试不算。
+R0 必须实际证明作者识别、第二页不同作品 ID 和下载后 FFprobe 成功。网络、授权或平台拒绝时保留失败记录，不绕过访问控制。
 
-## 真实本地视频→Whisper→LLM链路
+## 源码与提交
 
-在本机设置并保管统一模型环境变量（不要填写到仓库或上传日志）：
+`backend/app` 为后端，`frontend/src` 为界面，`frontend/src-tauri` 为桌面宿主，`scripts` 为验证及构建入口。技术复用和许可证来源记录于 [GitHub 调研](docs/research/github-review.md)。
 
-```powershell
-$env:OPENAI_BASE_URL = "https://你的模型服务/v1"
-$env:OPENAI_API_KEY = "<本机密钥>"
-$env:OPENAI_MODEL = "<实际模型名称>"
-.\backend\.venv\Scripts\python.exe .\scripts\analyze_local_video.py `
-  "C:\Users\Public\Videos\你有权限分析的视频.mp4" --data-dir ".media\local-testing"
-```
-
-首次faster-whisper推理可能需要下载模型权重。结果写到选定`--data-dir`的SQLite中；重复同一文件/模型会复用有版本的字幕和分析结果。此命令发起**真实ASR和真实HTTP模型请求**，但本次在执行环境中没有运行到外部模型服务，因此不声称已有真实转写结果。
-
-## 显式实验性真实采集开关
-
-在完成R0并遵守访问要求后，在**本地Tauri进程环境**中同时提供：
-
-```powershell
-$env:ANALYST_ENABLE_LIVE = "1"
-$env:OPENAI_BASE_URL = "https://你的模型服务/v1"
-$env:OPENAI_API_KEY = "<本机密钥>"
-$env:OPENAI_MODEL = "<实际模型名称>"
-# 可选：一个你有权使用的、只存储在本机忽略目录下的Cookie文本文件
-$env:ANALYST_DOUYIN_COOKIE_FILE = ".secrets\douyin-cookie.txt"
-```
-
-此时Sidecar会尝试通过真实F2、真实媒体下载、Whisper和LLM处理任务。**只设置开关并不保证真实采集能成功**。所有失败在任务/单视频记录中保留，无证据不产出报告。请保留少量真实样本的去敏验收记录，并避免高频请求。
-
-## 未完成与风险
-
-M3 LangGraph证据审查Agent、Windows安装包验证、真实采集成功率、完整前端类型检查、模型费用和性能实验均未完成。Windows打包脚本尚未在具备完整采集/ASR可选依赖的机器上验证是否需要额外`--collect-all`和FFmpeg资源配置。请以[`docs/progress.md`](docs/progress.md)为准。
-
-**仓库说明**：这是单独生成的Git仓库，不是你Windows电脑上的原项目。导入已有工程前务必先查看目标工程的未提交修改。
+本地提交已使用用户自己的 Git 身份，后续操作见 [提交说明](docs/git-submission.md)。安装包、模型权重、密钥、Cookie、日志和媒体均不作为源码提交。第三方运行库清单位于打包资源的 THIRD_PARTY_NOTICES.txt；本机安装构建不等于已完成面向公众的许可证及对应源代码分发手续。

@@ -1,6 +1,7 @@
 """Strict LLM JSON contract and server-owned, immutable transcript evidence anchors."""
 
 import json
+import asyncio
 from typing import Any, Literal, Protocol
 
 import httpx
@@ -135,9 +136,17 @@ class OpenAICompatibleInsightGenerator:
             raise ValueError("需要完整配置 OPENAI_BASE_URL / OPENAI_API_KEY / OPENAI_MODEL")
         if not base_url.startswith(("https://", "http://127.0.0.1:", "http://localhost:")):
             raise ValueError("OPENAI_BASE_URL必须使用HTTPS或本机HTTP")
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key
-        self.model = model
+        from .runtime_settings import RuntimeSettings
+        self.base_url = RuntimeSettings(OPENAI_BASE_URL=base_url).OPENAI_BASE_URL
+        self.api_key = api_key.strip()
+        self.model = model.strip()
+        self.cache_identity = self.base_url + "|" + self.model
+        self.last_run = {}
+
+    MAX_REQUESTS = 12
+    MAX_CHUNKS = 5
+    CHUNK_CHARACTERS = 16_000
+    MAX_OUTPUT_TOKENS = 4096
 
     async def generate(self, segments: list[Any]) -> dict[str, Any]:
         payload = [
@@ -145,28 +154,79 @@ class OpenAICompatibleInsightGenerator:
              "end_ms": seg.end_ms, "text": seg.text}
             for seg in segments
         ]
-        transcript_json = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-        if len(transcript_json) > 48_000:
-            raise ValueError("字幕超过M1单次模型请求长度，请分段处理而不是截断证据")
-        body = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"字幕逐段数据：\n{transcript_json}"},
-            ],
-            "response_format": {"type": "json_object"},
-        }
-        async with httpx.AsyncClient(timeout=httpx.Timeout(180, connect=15)) as client:
-            response = await client.post(
-                self.base_url + "/chat/completions", json=body,
-                headers={"Authorization": f"Bearer {self.api_key}"},
-            )
-            response.raise_for_status()
-            data = response.json()
-        text = data["choices"][0]["message"]["content"]
-        if not isinstance(text, str):
-            raise ValueError("模型未返回JSON字符串")
-        result = json.loads(text)
-        if not isinstance(result, dict):
-            raise ValueError("模型结果不是JSON对象")
-        return result
+        self.last_run = {"harness_version": "fixed-analysis-v1", "requests": 0,
+                         "max_requests": self.MAX_REQUESTS, "max_output_tokens": self.MAX_OUTPUT_TOKENS,
+                         "prompt_tokens": 0, "completion_tokens": 0, "usage_reported": False, "chunks": 0}
+        chunks = []
+        current = []
+        size = 2
+        for segment in payload:
+            encoded = json.dumps(segment, ensure_ascii=False, separators=(",", ":"))
+            if len(encoded) > self.CHUNK_CHARACTERS:
+                raise ValueError("单个字幕段超过分析上下文上限，请先检查字幕分段")
+            if current and size + len(encoded) + 1 > self.CHUNK_CHARACTERS:
+                chunks.append(current)
+                current, size = [], 2
+            current.append(segment)
+            size += len(encoded) + 1
+        if current:
+            chunks.append(current)
+        if not chunks or len(chunks) > self.MAX_CHUNKS:
+            raise ValueError("字幕为空或超过本版的 5 个分段上限；已停止，避免无限请求")
+        self.last_run["chunks"] = len(chunks)
+        async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=15)) as client:
+            results = []
+            for chunk in chunks:
+                results.append(await self._request(client, "字幕逐段数据：\n" + json.dumps(chunk, ensure_ascii=False),
+                                                   {segment["segment_id"] for segment in chunk}))
+            if len(results) == 1:
+                return results[0]
+            synthesis = json.dumps(results, ensure_ascii=False)
+            if len(synthesis) > 48_000:
+                raise ValueError("分段结果超过汇总上下文上限，已停止并保留原始字幕")
+            return await self._request(client,
+                "以下是按字幕生成且已校验引用的分段 JSON。请合并同义主题、去重观点，归纳整条视频。"
+                "只使用已有分段结果，保留其字幕段 ID，不新增事实或身份认证。输出同一 JSON 格式：\n" + synthesis,
+                {segment["segment_id"] for segment in payload})
+
+    async def _request(self, client, content, allowed_ids):
+        body = {"model": self.model, "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": content}],
+            "response_format": {"type": "json_object"}, "max_tokens": self.MAX_OUTPUT_TOKENS}
+        for attempt in range(2):
+            if self.last_run["requests"] >= self.MAX_REQUESTS:
+                raise ValueError("已达到单视频模型请求上限")
+            self.last_run["requests"] += 1
+            try:
+                response = await client.post(self.base_url + "/chat/completions", json=body,
+                                             headers={"Authorization": f"Bearer {self.api_key}"})
+                response.raise_for_status()
+                data = response.json()
+                usage = data.get("usage") or {}
+                if usage:
+                    self.last_run["usage_reported"] = True
+                for field in ("prompt_tokens", "completion_tokens"):
+                    value = usage.get(field, 0)
+                    if isinstance(value, int) and value >= 0:
+                        self.last_run[field] += value
+                choice = data["choices"][0]
+                if choice.get("finish_reason") == "length":
+                    raise ValueError("模型输出达到 token 上限，未保存不完整结果")
+                text = choice["message"]["content"]
+                if not isinstance(text, str):
+                    raise ValueError("模型未返回 JSON 字符串")
+                draft = InsightDraft.model_validate(json.loads(text))
+                referenced = set(draft.summary_segment_ids)
+                for statement in draft.key_claims + draft.explicitly_stated_preferences + draft.discussed_entities:
+                    referenced.update(statement.segment_ids)
+                if not referenced <= allowed_ids:
+                    raise EvidenceIntegrityError("模型引用了当前材料中不存在的字幕段")
+                return draft.model_dump()
+            except httpx.HTTPStatusError as exc:
+                if attempt or exc.response.status_code not in {408, 429, 500, 502, 503, 504}:
+                    raise
+            except (httpx.TransportError, ValueError, KeyError, IndexError, TypeError):
+                if attempt:
+                    raise
+            await asyncio.sleep(0.5)
+        raise RuntimeError("模型请求未能完成")

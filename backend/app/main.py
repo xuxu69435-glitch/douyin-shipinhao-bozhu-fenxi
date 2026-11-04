@@ -22,6 +22,7 @@ from .schemas import CreateTask, HealthView, TaskView, VideoView, SegmentView, S
 from .worker import Processor, SingleWorker, apply_action, missing_collector, PrerequisiteMissing
 from .evidence import segments_for_version, subtitles_text, assert_analysis_integrity, assert_report_integrity
 from .reporting import build_creator_report, export_report_markdown, ReportNotReady
+from .runtime_settings import RuntimeSettings, load_runtime_settings, save_runtime_settings
 import json
 
 
@@ -30,17 +31,27 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
     if len(token) < 16:
         raise ValueError("Unsafe short backend token")
     factory, engine = build_session_factory(data_dir)
-    if enable_live:
-        from .job_processor import build_opt_in_live_processor
-        try:
-            processor = build_opt_in_live_processor(factory, data_dir)
-        except (PrerequisiteMissing, OSError, RuntimeError, ValueError) as exc:
-            # Preserve backend diagnostics and task history even when local config
-            # cannot start the real pipeline. Never silently run synthetic data.
-            explanation = str(exc)
-            async def config_blocked(_task_id, _control):
-                raise PrerequisiteMissing("LIVE_PIPELINE_CONFIG_BLOCKED", explanation)
-            processor = config_blocked
+    if processor is missing_collector:
+        async def configured_processor(task_id, control):
+            from .job_processor import build_opt_in_live_processor
+            from .local_processor import run_local_task
+            try:
+                configuration = load_runtime_settings(data_dir)
+                with factory() as session:
+                    is_local = session.get(TaskRecord, task_id).source_kind == "local"
+                if not is_local and not enable_live and not configuration.enable_live:
+                    await missing_collector(task_id, control)
+                active_processor = (None if is_local else
+                                    build_opt_in_live_processor(factory, data_dir, configuration))
+            except PrerequisiteMissing:
+                raise
+            except (OSError, RuntimeError, ValueError) as exc:
+                raise PrerequisiteMissing("LIVE_PIPELINE_CONFIG_BLOCKED", str(exc)) from exc
+            if is_local:
+                await run_local_task(task_id, control, factory, data_dir, configuration)
+            else:
+                await active_processor(task_id, control)
+        processor = configured_processor
     worker = SingleWorker(factory, processor)
 
     @asynccontextmanager
@@ -70,6 +81,112 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
     @api.get("/health", response_model=HealthView)
     def health():
         return HealthView()
+
+    @api.get("/settings")
+    def get_settings():
+        try:
+            return load_runtime_settings(data_dir).public_view(data_dir)
+        except (ValueError, OSError):
+            raise HTTPException(409, "本机配置无法读取，请检查应用数据目录或重新配置")
+
+    @api.post("/settings")
+    def update_settings(body: RuntimeSettings):
+        if any_running():
+            raise HTTPException(409, "请先暂停或完成正在执行的任务，再修改配置")
+        if body.OPENAI_API_KEY is None:
+            body.OPENAI_API_KEY = load_runtime_settings(data_dir).OPENAI_API_KEY
+        try:
+            save_runtime_settings(data_dir, body)
+        except OSError:
+            raise HTTPException(500, "无法保存本机配置")
+        return body.public_view(data_dir)
+
+    def any_running():
+        with factory() as session:
+            return session.scalar(select(TaskRecord.id).where(
+                TaskRecord.status.in_(["running", "pausing", "cancelling"])).limit(1)) is not None
+
+    @api.post("/settings/test")
+    async def test_model_connection():
+        from types import SimpleNamespace
+        import httpx
+        from .insights import OpenAICompatibleInsightGenerator, anchor_insight
+        configuration = load_runtime_settings(data_dir)
+        key = configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else ""
+        try:
+            generator = OpenAICompatibleInsightGenerator(configuration.OPENAI_BASE_URL, key, configuration.OPENAI_MODEL)
+            segment = SimpleNamespace(video_id="connection-test", transcript_version="connection-test",
+                                      segment_id=0, start_ms=0, end_ms=1000, text="这是一段模型连接测试字幕。")
+            draft = await generator.generate([segment])
+            anchor_insight(draft, segment.video_id, segment.transcript_version, [segment])
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(502, f"模型服务返回 HTTP {exc.response.status_code}，请检查密钥、模型及接口兼容性")
+        except httpx.HTTPError:
+            raise HTTPException(502, "无法连接模型服务，请检查 API 地址和网络")
+        except (ValueError, KeyError, IndexError, TypeError):
+            raise HTTPException(422, "模型配置不完整或响应不符合分析所需的 JSON 及证据格式")
+        return {"ok": True, "model": configuration.OPENAI_MODEL, "message": "连接及结构化证据校验通过；尚未测试真实视频分析"}
+
+    @api.get("/diagnostics")
+    def diagnostics():
+        import os
+        import importlib.metadata
+        import shutil
+        from .media import media_executable
+        packages = {}
+        for distribution in ("f2", "faster-whisper"):
+            try:
+                packages[distribution] = importlib.metadata.version(distribution)
+            except importlib.metadata.PackageNotFoundError:
+                packages[distribution] = None
+        return {"process_id": os.getpid(), "ffmpeg": bool(shutil.which(media_executable("ffmpeg"))),
+                "ffprobe": bool(shutil.which(media_executable("ffprobe"))),
+                "packages": packages, "data_dir": str(data_dir), "agent_enabled": False}
+
+    @api.post("/shutdown")
+    def shutdown():
+        callback = getattr(app.state, "request_shutdown", None)
+        if callback:
+            callback()
+        return {"ok": True}
+
+    @api.get("/diagnostics/asr")
+    def check_asr_libraries():
+        try:
+            from faster_whisper import WhisperModel  # imports native libraries, never loads weights
+            import ctranslate2
+            import onnxruntime
+        except (ImportError, OSError):
+            raise HTTPException(503, "语音组件或其本机运行库无法加载，请检查安装完整性")
+        return {"available": WhisperModel is not None, "weights_loaded": False,
+                "ctranslate2": ctranslate2.__version__, "onnxruntime": onnxruntime.__version__}
+
+    @api.get("/videos/{video_id}/runs")
+    def video_runs(video_id: str):
+        from .models import AnalysisRun
+        with factory() as session:
+            rows = session.scalars(select(AnalysisRun).where(AnalysisRun.video_id == video_id)
+                                   .order_by(AnalysisRun.created_at.desc()).limit(100))
+            return [{"id": row.id, "analysis_version": row.analysis_version,
+                     "model_id": row.model_id, "provenance": row.provenance,
+                     "status": row.status, "error_code": row.error_code,
+                     "metrics": row.metrics, "created_at": row.created_at.isoformat()} for row in rows]
+
+    @api.post("/local-videos", response_model=TaskView, status_code=201)
+    def create_local_task(body: dict[str, str]):
+        from .local_processor import import_local_video
+        try:
+            imported, fingerprint = import_local_video(Path(body.get("path", "")), data_dir)
+        except (ValueError, OSError) as exc:
+            raise HTTPException(422, str(exc)) from exc
+        with factory.begin() as session:
+            task = TaskRecord(input_text=str(imported), source_url=Path(body["path"]).name,
+                              source_kind="local", platform_id=fingerprint, max_videos=1)
+            session.add(task)
+            session.flush()
+            result = TaskView.model_validate(task)
+        worker.enqueue(result.id)
+        return result
 
     @api.post("/tasks", response_model=TaskView, status_code=status.HTTP_201_CREATED)
     def create_task(body: CreateTask):

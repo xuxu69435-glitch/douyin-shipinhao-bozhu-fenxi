@@ -2,6 +2,14 @@
 
 Date: 2026-11-04. Research method: GitHub connector read of concrete source files, directory trees, issue #435, license files, repository HEADs; Douyin open platform and Tauri official docs. This is **source inspection**, not a claim that the remote projects were installed or executed locally.
 
+## Windows follow-up — 2026-11-04
+
+The source review below is the earlier baseline. On the Windows machine, the declared F2 dependency resolved to PyPI **0.0.1.7**, installed into an isolated verification environment. `ClientConfManager.headers`, `SecUserIdFetcher.get_sec_user_id`, `AwemeIdFetcher.get_aweme_id`, and this project's collector options were checked successfully. Importing `f2.apps.douyin.crawler` also imports `model.py`, where `BaseRequestModel` calls `TokenManager.gen_real_msToken()` during class definition. That attempted a remote token request and failed with WinError 10013 under restricted networking. This is an SDK initialization/network finding, **not** a successful creator, pagination or media test. No token-generation fallback or access-control bypass was added.
+
+The PyPI dependency is not pinned to the GitHub commit reviewed below. Version/API compatibility and actual platform behavior must be accepted against the exact installed distribution before enabling the collector. The BiliNote Rust integration file at the recorded commit was re-read through the GitHub connector; no source was copied into the application during this check.
+
+Python 3.12.2 backend tests now pass **50/50 on Windows**, and the full frontend build passes. Tauri packaging was attempted and stops at missing `cargo`. Detailed findings: [Windows readiness check](../testing/windows-readiness-2026-11-04.md).
+
 ## 1. Repositories and adoption
 
 | Repository | Ref reviewed | License verified in source | Key source files and actual observed functionality | Dependencies / costs | Decision | Tests in this R0 |

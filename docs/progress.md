@@ -2,6 +2,33 @@
 
 范围：仅抖音，Windows本地Tauri 2桌面应用。**“代码已实现”≠“真实抖音通过”≠“Windows安装包通过”。**
 
+## 本轮修复与桌面交付（最新状态）
+
+- 用户决定：真实样本、模型 API 及效果测试由用户自行接入；LangGraph 审查 Agent 暂缓，采用固定流程与轻量 harness。
+- Windows / Python 3.12.2，完整后端测试 **64 passed**。TypeScript/Vite 构建、Rust cargo check、发行版编译及 NSIS 构建均通过。
+- 两次真实桌面离线自检通过：认证代理、密钥不回显、合成视频签名 Range、打包语音库加载、内置 FFmpeg/FFprobe、重启历史持久化与后端进程树退出。详见 testing/desktop-smoke.json；没有据此声称实际 WebView 播放、真实采集或真实模型推理通过。
+- 已补基础 httpx 依赖、采集发布时间持久化、短链单视频数量修正、原生文件选择及导出保存、模型与采集设置、连接测试、Windows DPAPI 密钥保存、运行时组件打包及工作目录管理。
+- 修复重复处理已有媒体时新 CDN 地址缺失导致无法复用的问题；从旧报告回看证据时选择其对应的分析/字幕版本，避免混用最新分析与旧字幕。
+- 真实合成样本重现 Windows GBK 解码 FFprobe 中文路径/元数据时崩溃，已指定 UTF-8 并加入中文文件名及标题回归测试。
+- 已补有限请求/输出/重试、长字幕分段汇总、模型服务参与缓存版本、缓存证据核查及 analysis_runs 运行记录；中断与失败不丢已有字幕。机制及取舍见 research/harness-decision.md。
+- 依赖记录：backend/requirements-windows.lock、frontend/package-lock.json、frontend/src-tauri/Cargo.lock。Sidecar 带第三方许可库存清单，不携带模型权重或用户配置。
+- Git：两条历史 Author/Committer 已修正为 xuxu69435，原始历史已另存仓库外备份。当前 main 分支与后续提交使用同一用户身份，origin 指向用户提供的仓库；未推送。
+- API 接入位置与顺序见 api-setup.md。安装后的最终验证结果与路径在 testing/windows-desktop-delivery.md 中记录。
+
+### 仍待用户或后续验证
+
+真实抖音作者、第二页和可播放媒体；真实 ASR/LLM 质量与费用；WebView 实际播放和原生文件对话框交互；10/30 视频的真实恢复/失败表现；通用同义主题归并与主体身份核实。主营业务证据不足仍保持留空。M3 Agent 按用户决定暂缓，不列为本轮交付阻塞。
+
+以下保留修复前的检查快照及早期 Linux 验证记录；不能用其中旧的“工具链缺失”描述覆盖上述最新结果。
+
+## Windows 本机补充核查（修复前历史快照，2026-11-04）
+
+- 已在 Windows / Python 3.12.2 隔离环境运行后端测试：**50 passed**；本地 Python 子进程的健康检查、认证、重启持久化与退出检查通过，不代表 Tauri/PyInstaller 生命周期通过。
+- 前端依赖安装成功，**完整 TypeScript 检查及 Vite 构建通过**。实际执行 `npm run tauri:build` 因缺少 cargo 失败，没有生成 Windows 安装包。
+- GitHub 目标仓库当前为空；本地工程没有 remote，尚未提交或推送本次检查记录。
+- 纯基础后端安装缺少 httpx 运行依赖，实际导入失败；F2 SDK 可选依赖可安装，但导入采集模块会请求远端令牌，受限网络下失败；R0、真实 ASR/LLM、M3 和 Windows 安装包仍未通过。
+- 新发现的发布时间落库、固定主题别名、主体核实及 Sidecar 打包等缺漏，连同前端安装/构建结果，统一记录在 [Windows 运行就绪检查](testing/windows-readiness-2026-11-04.md)。以下原阶段矩阵与 Linux 执行证据保留为历史记录。
+
 ## 阶段验收矩阵
 
 | 阶段 | 已实施并可核对 | 自动化结果 | 仍不通过/缺失 |
@@ -42,4 +69,4 @@
 ## Git记录
 
 - `R0 M0`本地独立代码基线已经提交。后续增量有本地提交记录；**并未推送到用户原有GitHub仓库**。
-- 用户原仓库未挂载，本项目是完全独立、可交给Codex导入或继续开发的源码工程。
+- 早期代码基线是独立生成的源码工程，之后已在本机继续开发，并配置用户提供的远端仓库。

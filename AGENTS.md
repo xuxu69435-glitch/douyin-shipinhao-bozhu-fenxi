@@ -1,24 +1,32 @@
-# Codex 承接指令 — 抖音博主内容分析智能体 V5
+# 项目开发约定 — 抖音博主内容分析
 
-本目录是独立生成的源码仓库。先阅读`docs/progress.md`、`docs/research/github-review.md`、`docs/architecture.md`、`README.md`以及Git记录，再行动。
+先阅读 docs/progress.md、docs/research/github-review.md、docs/research/harness-decision.md、README.md 和实际 Git 状态。不要覆盖未提交的用户工作。
 
-## 不得改变的事实
+## 当前事实与用户决定
 
-- GitHub源代码调研完成，但**R0真实平台测试没有通过**。不能凭F2源码或fixture测试宣布抖音作者识别、第二页或可播放性已实测。
-- 本地Linux/Python 3.13.5后端测试**50 passed**。没有真正运行faster-whisper权重推理或OPENAI兼容服务；所有模拟结果写为`test_fixture`。
-- M0/M1/M2有可测试源码、UI和受限开关，**不是已通过Windows打包和真实采集的成品**。
-- M3 LangGraph审查尚未实现。M4 Windows安装包尚未生成；`npm install`被无DNS阻塞，Rust工具链缺失。
-- 默认Worker使用`missing_collector`，不可为了演示把模拟数据冒充真实数据。可显式`ANALYST_ENABLE_LIVE=1`尝试真实链路，但实测验收仍须独立记录。
+- 仅开发抖音，不开发微信视频号。
+- Windows / Python 3.12.2 后端 64 项测试通过；前端完整构建、Rust 编译、PyInstaller Sidecar 及 NSIS 安装包已运行验证。具体生命周期与安装结果以 docs/testing 下的真实记录为准。
+- 真实抖音作者、第二页、下载可播放性、Whisper 权重推理和真实 LLM 效果没有通过验收。用户将自行接入 API 和提供真实测试，不能把合成媒体及测试替身称为真实分析。
+- 用户决定暂缓 LangGraph Agent，当前采用固定流程与轻量 harness，见 harness-decision.md。不要擅自加入自主工具循环或多 Agent。
+- 模型入口为桌面的“模型与采集设置”，只使用 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL。Windows 保存密钥使用 DPAPI，API 不回显密钥。真实采集默认关闭。
+- 本地 Git 作者和提交者均为用户本机已配置的 xuxu69435，历史已备份并修正。保留这一身份，不添加工具协作者尾注。未经用户要求不推送远端。
 
-## 继续开发时的执行顺序
+## 实现与验证边界
 
-1. 首先检查实际目的仓库的`git status`, HEAD、未跟踪文件。合并前不要覆盖用户已有代码。此Git仓库可单独开发和提交。
-2. 在Windows 11 Python 3.12安装依赖、运行50项backend测试；执行GitHub review中记录的授权R0探针。用明确样本验证作品/主页作者、真实第二页不同作品ID、下载文件FFprobe，保存去敏的真实日志（不是替身日志）。不获取受限内容，不绕过访问控制。
-3. 完整安装frontend依赖并运行`npm run build`、`cargo check`、`npm run tauri:dev`、`npm run tauri:build`，先补充PyInstaller采集/ASR惰性导入、模型文件和FFmpeg的正确打包，核验启动退出、媒体播放、配置、数据持久化。当前环境没有做过这些验证。
-4. 在真实采集许可通过后执行小样本单视频和10/30视频任务，检查媒体路径、Whisper版本、字幕对齐、LLM结构化输出、主题归并、证据引用、停止原因、恢复及费用；不能抄写假成功结论。
-5. 再实现M3：单个LangGraph证据审查Agent，调用范围仅限数据库已有字幕与上下文，有限重分析，不许扩大采集；设硬性模型请求数、工具调用、步数、token预算和审计日志。保留每次修订/撤回的原因、版本、原始证据。
-6. 每阶段完成适当测试并提交真实代码，更新`docs/progress.md`中通过/未通过条目。禁止提交`OPENAI_API_KEY`、Cookie、媒体大文件或签名URL。
+采集 app/collector.py → 任务 app/job_processor.py / app/local_processor.py → 媒体 app/media.py → ASR app/transcription.py → LLM app/insights.py / app/pipeline.py → SQLite app/models.py → 报告 app/reporting.py。app/evidence.py 负责导出前的证据及版本校验。
 
-## 核心边界
+- 保持 Tauri 2、React、FastAPI、SQLite、单 Worker，不引入 Redis、Celery、微服务、向量数据库。
+- 模型只能选择已有字幕段 ID；时间戳、视频 ID 和版本由程序生成。JSON 及存在性校验不等于语义事实审查。
+- 不把旁白、嘉宾、引用对象或未核实的表达断言为博主个人喜好；没有公开证据不推断主营业务。
+- 不自动读取浏览器 Cookie，不绕过平台访问控制；密钥、Cookie、日志、媒体和安装包不得进入源码提交。
+- 真实与模拟结果严格区分，测试替身标为 test_fixture。
+- 每次分析的请求、输出、分段及重试上限必须保持明确，失败与中断保留记录，禁止无限重试。
+- Rust 持有主令牌，通过受限 IPC 代理 API；媒体使用签名链接，文件选择和导出由原生对话框确认路径。Windows Job 约束 Sidecar 全部后代，退出时先请求正常关闭，再兜底清理。
 
-采集`app/collector.py` → 任务`app/job_processor.py` → 媒体`app/media.py` → ASR`app/transcription.py` → LLM/evidence`app/insights.py`/`app/pipeline.py` → 数据`app/models.py` → 报告`app/reporting.py`。`app/evidence.py`承担导出前的真实性和版本检验。桌面Rust只持有Sidecar进程和本机令牌，不将主令牌暴露给前端。不要引入Redis、Celery、微服务、向量数据库或多Agent。
+## 工作顺序
+
+1. 检查 git status、分支和用户改动，按本轮任务做最小修改。
+2. 对有实际行为变化的功能补充必要验证；运行后端测试与前端构建。
+3. 桌面改动时运行 cargo check、打包 Sidecar、构建安装包和 scripts/smoke_desktop.py。自检使用独立目录，不能调用付费模型或污染用户分析数据。
+4. 受限工具环境中的 WebView2/Windows Job 访问拒绝，应在正常桌面权限下验证，不应通过删除退出保护来规避。PowerShell 脚本可使用进程级 ExecutionPolicy 参数，不修改系统策略。
+5. 更新 docs/progress.md，分别记录通过、未通过、用户尚待真实验证的内容；提交身份维持用户配置。

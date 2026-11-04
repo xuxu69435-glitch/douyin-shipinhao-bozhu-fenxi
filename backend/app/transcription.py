@@ -7,6 +7,7 @@ report the model identity and whether segments represent a real ASR inference.
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+from importlib.metadata import version, PackageNotFoundError
 
 
 @dataclass(frozen=True)
@@ -58,7 +59,11 @@ class FasterWhisperTranscriber:
 
     @property
     def model_version(self) -> str:
-        return f"faster-whisper:{self.model_name}:{self.device}:{self.compute_type}:vad1:beam5"
+        try:
+            engine_version = version("faster-whisper")
+        except PackageNotFoundError:
+            engine_version = "not-installed"
+        return f"faster-whisper/{engine_version}:{self.model_name}:{self.device}:{self.compute_type}:vad1:beam5"
 
     def transcribe(self, audio_path: Path) -> AsrResult:
         if not audio_path.is_file():

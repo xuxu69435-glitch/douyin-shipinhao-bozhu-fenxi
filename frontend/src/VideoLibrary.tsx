@@ -44,16 +44,21 @@ export default function VideoLibrary({ ready, targetEvidence }: { ready: boolean
       setDetail(data);
       try { setMediaUrl(await getDesktopMediaUrl(video.id)); }
       catch { setMediaUrl(null); /* Player is optional; evidence remains available. */ }
-      const latest = data.analyses[0];
-      const version = destination?.transcript_version ?? latest?.transcript_version ?? data.transcript_versions[0];
+      const selectedAnalysis = destination?.analysis_version
+        ? data.analyses.find(analysis => analysis.analysis_version === destination.analysis_version)
+        : destination?.transcript_version
+          ? data.analyses.find(analysis => analysis.transcript_version === destination.transcript_version)
+          : data.analyses[0];
+      if (destination?.analysis_version && !selectedAnalysis) throw new Error('该证据对应的分析版本已不可用。');
+      const version = destination?.transcript_version ?? selectedAnalysis?.transcript_version ?? data.transcript_versions[0];
       setChosenVersion(version ?? null);
       if (version) {
         const subtitles = await apiRequest<TranscriptSegment[]>(`/api/videos/${video.id}/transcripts/${version}`);
         setSegments(subtitles);
         if (destination) setFocused(destination.segment_id);
       }
-      if (latest) {
-        const result = await apiRequest<VideoInsight>(`/api/videos/${video.id}/analyses/${latest.analysis_version}`);
+      if (selectedAnalysis) {
+        const result = await apiRequest<VideoInsight>(`/api/videos/${video.id}/analyses/${selectedAnalysis.analysis_version}`);
         setInsight(result);
       }
     } catch (err) { setError(String(err)); }
@@ -66,7 +71,7 @@ export default function VideoLibrary({ ready, targetEvidence }: { ready: boolean
     if (video) void openVideo(video, targetEvidence);
   // A new target requests a fresh selection; avoid repeated requests on every render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetEvidence?.video_id, targetEvidence?.segment_id, targetEvidence?.transcript_version, videos]);
+  }, [targetEvidence?.video_id, targetEvidence?.segment_id, targetEvidence?.transcript_version, targetEvidence?.analysis_version, videos]);
 
   useEffect(() => {
     if (focused !== null && segments.length) {

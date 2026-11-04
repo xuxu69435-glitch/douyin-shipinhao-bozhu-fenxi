@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from .models import TaskRecord
+from .models import TaskRecord, AnalysisRun
 
 
 class PrerequisiteMissing(Exception):
@@ -60,6 +60,9 @@ class SingleWorker:
             return
         self.loop = asyncio.get_running_loop()
         with self.factory.begin() as session:
+            for run in session.scalars(select(AnalysisRun).where(AnalysisRun.status == "running")):
+                run.status = "interrupted"
+                run.error_code = "InterruptedByRestart"
             for task in session.scalars(select(TaskRecord).where(TaskRecord.status.in_(["running", "cancelling", "pausing"]))):
                 task.status = {"running": "queued", "cancelling": "cancelled", "pausing": "paused"}[task.status]
                 task.stop_reason = "interrupted_by_restart"

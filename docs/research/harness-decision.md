@@ -1,0 +1,40 @@
+# Harness 与证据审查 Agent 的取舍（2026-11-04）
+
+## 结论
+
+当前采用 **固定分析流程 + 轻量执行约束与验证**；暂缓 LangGraph 证据审查 Agent，不接入通用编码 Agent 或新的 harness 框架。
+
+这里的 harness 指模型外围的执行、状态、约束、记录及验证机制。它与 Agent 并非互相替代的同类产品；Agent 也需要这样的机制。项目当前的任务是确定的“采集→媒体校验→转写→结构化分析→证据校验→报告”，尚无证据表明需要模型动态选择下一步工具。
+
+这是根据本项目任务形态作出的工程判断，不是声称已用真实视频证明了某种架构更准确。
+
+## 一手资料与适用范围
+
+- [Anthropic：Building effective agents](https://www.anthropic.com/research/building-effective-agents)：区分预设代码路径的 workflow 与由模型动态控制流程的 Agent；对明确任务优先使用简单流程和可编程检查。借鉴这一区分，不复制框架源码。
+- [Anthropic：Effective harnesses for long-running agents](https://www.anthropic.com/research/effective-harnesses-for-long-running-agents)：讨论跨会话进度、环境准备和验证。其主要实验是长程编码，不能直接视作本项目视频分析效果的证据。
+- [OpenAI Developers：open agent harness integration](https://developers.openai.com/blog/codex-as-a-platform)：说明 harness 承担循环、状态、工具及生命周期，业务应用仍负责业务记录与控制。这里只参考概念，不采用其编码 Agent、SDK 或 app-server。
+- [OpenAI：Structured model outputs](https://developers.openai.com/api/docs/guides/structured-outputs)：JSON mode 不替代 schema 验证。兼容服务采用 JSON mode，再由本项目验证结构及证据。
+
+## 已落实的轻量机制
+
+| 机制 | 当前实现与验证边界 |
+| --- | --- |
+| 明确步骤 | 原有单 Worker 固定路径；不让模型决定扩大采集范围或执行系统命令 |
+| 上下文上限 | 每段最多 16,000 字符，最多 5 段；超出则停止，不静默截断原文 |
+| 有限重试 | 每个分段/汇总最多 2 次请求；只对暂时网络/指定状态及无效结构有限重试；401 等配置错误不重试 |
+| 请求与输出上限 | 每次视频分析最多 12 次模型请求，每次 max_tokens=4096；每次 HTTP 超时 90 秒 |
+| 长字幕 | 固定分段分析后进行一次汇总；每一步都校验引用属于已有字幕 ID |
+| 证据门槛 | Pydantic 校验、程序生成时间戳与版本锚点、报告导出前重验 |
+| 恢复和复用 | ASR 与分析独立缓存；缓存身份包含模型服务地址及模型名；重复复用前检查已存证据；失败/取消保留转写供恢复 |
+| 执行记录 | SQLite analysis_runs 保存版本、来源性质、状态、错误类型、调用次数、分段及服务商返回的 token 用量；不存密钥、原始响应或 Cookie |
+| 桌面验证 | 独立离线 harness 启动真实桌面及打包后端，检查认证、签名媒体 Range、重启持久化和进程树清理 |
+
+调用次数按一次执行计数，用户主动恢复/重试会产生新的执行记录。服务商不返回 usage 时会记录 usage_reported=false。没有费率配置，因此不把 token/请求上限称为精确货币预算；服务商的实际计费还需用户核对。
+
+这些检查确认执行边界和引用存在性，**不能自动证明模型结论在语义上正确、说话人就是博主本人、采集已获得平台授权或真实转写质量合格**。
+
+## 何时再引入 Agent
+
+用户准备一批有人工标注的真实视频后，比较固定流程在错误引用、主体归属、主题归并与遗漏上的表现。如果失败主要需要查阅已存上下文、有限重分析及结论修订，再增加只读已有材料为主的单个审查 Agent，并与固定流程比较质量、延迟和费用。没有这种证据前，优先改善提示、分段和确定性校验。
+
+LangGraph 仍是后续可选实现入口，当前没有作为项目运行依赖安装或启用。

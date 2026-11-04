@@ -19,3 +19,10 @@ frontend/src-tauri/binaries/*-aarch64-*
 .media/
 
 *.tsbuildinfo
+*.egg-info/
+frontend/src-tauri/binaries/runtime/
+frontend/src-tauri/binaries/_internal/
+model-settings.json
+model-settings.tmp
+frontend/src-tauri/gen/
+logs/

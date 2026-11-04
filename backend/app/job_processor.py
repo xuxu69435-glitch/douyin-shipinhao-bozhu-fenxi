@@ -6,8 +6,8 @@ by module import or tests. One SingleWorker invokes this sequentially.
 """
 
 import asyncio
-import os
 import re
+import datetime as dt
 from pathlib import Path
 from typing import Protocol
 
@@ -18,7 +18,7 @@ from .collector import AuthorWorks, F2Collector, VideoCandidate
 from .insights import OpenAICompatibleInsightGenerator
 from .links import ParsedLink, resolve_short_link
 from .media import download_verified_media, probe_media
-from .models import TaskRecord, TaskVideoRecord, VideoAnalysis, VideoRecord
+from .models import TaskRecord, TaskVideoRecord, VideoRecord
 from .pipeline import analyze_media, sha256_file
 from .reporting import ReportNotReady, build_creator_report
 from .transcription import FasterWhisperTranscriber
@@ -69,11 +69,15 @@ class LiveTaskProcessor:
             if video is None:
                 video = VideoRecord(platform="douyin", platform_video_id=candidate.platform_video_id,
                                     author_platform_id=candidate.author_platform_id,
-                                    title=candidate.title, source_url=candidate.source_url)
+                                    title=candidate.title, source_url=candidate.source_url,
+                                    published_at=(dt.datetime.fromtimestamp(candidate.published_at_unix, dt.timezone.utc)
+                                                  if candidate.published_at_unix is not None else None))
                 session.add(video)
                 session.flush()
             if video.author_platform_id != candidate.author_platform_id:
                 raise ValueError("视频作者和数据库中的平台作者不一致")
+            if video.published_at is None and candidate.published_at_unix is not None:
+                video.published_at = dt.datetime.fromtimestamp(candidate.published_at_unix, dt.timezone.utc)
             task_video = session.scalar(select(TaskVideoRecord).where(
                 TaskVideoRecord.task_id == task_id, TaskVideoRecord.video_id == video.id,
             ))
@@ -108,6 +112,8 @@ class LiveTaskProcessor:
                 record.source_url = target.url
                 record.source_kind = target.kind
                 record.platform_id = target.platform_id
+                if target.kind == "video":
+                    record.max_videos = 1
         if target.kind == "video":
             video = await self.provider.video_detail(target.url)
             return video.author_platform_id, [video], "single_video"
@@ -144,17 +150,8 @@ class LiveTaskProcessor:
             if candidate.author_platform_id != creator_id:
                 raise ValueError("平台响应包含不同作者的作品，终止批量任务")
             video_id, assoc_id = self.associate(task_id, candidate)
-            with self.factory() as session:
-                assoc = session.get(TaskVideoRecord, assoc_id)
-                if assoc.status == "completed":
-                    # Only skip if a stored analysis really exists.
-                    valid = session.scalar(select(VideoAnalysis).where(VideoAnalysis.video_id == video_id))
-                    if valid is not None:
-                        continue
             try:
                 self.stage(task_id, assoc_id, "download_media", "running")
-                if not candidate.media_url:
-                    raise RuntimeError("作品详情没有获准下载的媒体地址")
                 destination = self.data_dir / "media" / "douyin" / f"{candidate.platform_video_id}.mp4"
                 valid_existing = False
                 if destination.is_file():
@@ -167,6 +164,8 @@ class LiveTaskProcessor:
                             except Exception:
                                 pass
                 if not valid_existing:
+                    if not candidate.media_url:
+                        raise RuntimeError("作品详情没有获准下载的媒体地址")
                     await self.downloader(candidate.media_url, destination)
                 await control.checkpoint()
                 self.stage(task_id, assoc_id, "transcribe_and_analyze", "running")
@@ -210,18 +209,21 @@ class LiveTaskProcessor:
         self.change_phase(task_id, "finished")
 
 
-def build_opt_in_live_processor(factory: sessionmaker[Session], data_dir: Path):
+def build_opt_in_live_processor(factory: sessionmaker[Session], data_dir: Path, configuration=None):
     """Explicit local opt-in; never loads a cookie from a browser or bundles it."""
-    if os.getenv("ANALYST_ENABLE_LIVE") != "1":
+    if configuration is None:
+        from .runtime_settings import load_runtime_settings
+        configuration = load_runtime_settings(data_dir)
+    if not configuration.enable_live:
         raise RuntimeError("Live collector was not explicitly enabled")
-    base_url = os.getenv("OPENAI_BASE_URL", "")
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    model = os.getenv("OPENAI_MODEL", "")
+    base_url = configuration.OPENAI_BASE_URL
+    api_key = configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else ""
+    model = configuration.OPENAI_MODEL
     if not all([base_url, api_key, model]):
         raise PrerequisiteMissing("LLM_NOT_CONFIGURED", "缺少 OPENAI_BASE_URL / OPENAI_API_KEY / OPENAI_MODEL")
-    cookie_file = os.getenv("ANALYST_DOUYIN_COOKIE_FILE", "")
+    cookie_file = configuration.cookie_file
     cookie = Path(cookie_file).read_text(encoding="utf8").strip() if cookie_file else None
     return LiveTaskProcessor(
-        factory, data_dir, F2Collector(cookie), FasterWhisperTranscriber(),
+        factory, data_dir, F2Collector(cookie), FasterWhisperTranscriber(configuration.whisper_model),
         OpenAICompatibleInsightGenerator(base_url, api_key, model),
     )

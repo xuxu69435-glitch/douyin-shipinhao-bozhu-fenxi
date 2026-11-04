@@ -3,6 +3,8 @@
 import json
 import shutil
 import subprocess
+import os
+import sys
 from pathlib import Path
 
 
@@ -10,15 +12,26 @@ class InvalidMedia(RuntimeError):
     pass
 
 
+def media_executable(name: str) -> str:
+    root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
+    bundled = root / "media-tools" / (name + (".exe" if os.name == "nt" else ""))
+    return str(bundled) if bundled.is_file() else name
+
+
+def subprocess_options():
+    return {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+
+
 def probe_media(path: Path) -> dict:
     if not path.is_file() or path.stat().st_size == 0:
         raise InvalidMedia("媒体文件不存在或为空")
-    if shutil.which("ffprobe") is None:
+    if shutil.which(media_executable("ffprobe")) is None:
         raise InvalidMedia("ffprobe未安装")
     try:
         process = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(path)],
-            capture_output=True, text=True, timeout=30, check=True,
+            [media_executable("ffprobe"), "-v", "error", "-show_format", "-show_streams", "-of", "json", str(path)],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, check=True,
+            **subprocess_options(),
         )
         data = json.loads(process.stdout)
     except (subprocess.SubprocessError, ValueError) as exc:
@@ -32,14 +45,15 @@ def extract_audio(video: Path, audio: Path) -> Path | None:
     data = probe_media(video)
     if not any(stream.get("codec_type") == "audio" for stream in data.get("streams", [])):
         return None
-    if shutil.which("ffmpeg") is None:
+    if shutil.which(media_executable("ffmpeg")) is None:
         raise InvalidMedia("ffmpeg未安装")
     audio.parent.mkdir(parents=True, exist_ok=True)
     try:
         subprocess.run(
-            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-i", str(video),
+            [media_executable("ffmpeg"), "-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-i", str(video),
              "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(audio)],
             check=True, timeout=180, capture_output=True,
+            **subprocess_options(),
         )
     except subprocess.SubprocessError as exc:
         audio.unlink(missing_ok=True)

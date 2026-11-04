@@ -1,6 +1,7 @@
 """Run the *actual* local Python sidecar as a child process; test loopback HTTP persistence."""
 
 import json
+import argparse
 import os
 import secrets
 import socket
@@ -13,6 +14,7 @@ from pathlib import Path
 import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
+EXECUTABLE = None
 VIDEO = "https://www.douyin.com/video/7444000000000012345"
 
 
@@ -23,9 +25,12 @@ def free_port() -> int:
 
 
 def start_process(data_dir: str, port: int, token: str):
-    env = {**os.environ, "ANALYST_DATA_DIR": data_dir, "ANALYST_BACKEND_PORT": str(port), "ANALYST_BACKEND_TOKEN": token}
-    return subprocess.Popen([sys.executable, str(ROOT / "backend" / "sidecar.py")], env=env, cwd=ROOT,
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    env = {**os.environ, "ANALYST_DATA_DIR": data_dir, "ANALYST_BACKEND_PORT": str(port),
+           "ANALYST_BACKEND_TOKEN": token, "ANALYST_ENABLE_LIVE": "0"}
+    command = [str(EXECUTABLE)] if EXECUTABLE else [sys.executable, str(ROOT / "backend" / "sidecar.py")]
+    options = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+    return subprocess.Popen(command, env=env, cwd=ROOT, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, **options)
 
 
 def wait_ready(port: int, token: str):
@@ -41,10 +46,20 @@ def wait_ready(port: int, token: str):
     raise RuntimeError("backend process did not become ready")
 
 
-def stop_process(process):
-    process.terminate()
+def stop_process(process, port, token):
     try:
-        process.wait(timeout=10)
+        httpx.post(f"http://127.0.0.1:{port}/api/shutdown", headers={"X-Analyst-Token": token}, timeout=3)
+        process.wait(timeout=5)
+        return
+    except (httpx.HTTPError, subprocess.TimeoutExpired):
+        pass
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                       capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=5)
     except subprocess.TimeoutExpired:
         process.kill()
         process.wait(timeout=5)
@@ -60,6 +75,27 @@ def run():
             base = f"http://127.0.0.1:{port}/api"
             assert httpx.get(f"{base}/tasks", timeout=3).status_code == 401
             headers = {"X-Analyst-Token": token}
+            configuration = {"OPENAI_BASE_URL": "https://example.invalid/v1", "OPENAI_MODEL": "fixture-model",
+                             "OPENAI_API_KEY": "fixture-desktop-settings-key", "enable_live": False}
+            settings = httpx.post(f"{base}/settings", headers=headers, json=configuration, timeout=5)
+            assert settings.status_code == 200 and settings.json()["api_key_configured"], settings.text
+            assert "fixture-desktop-settings-key" not in settings.text
+            if os.name == "nt":
+                assert "fixture-desktop-settings-key" not in (Path(data_dir) / "model-settings.json").read_text()
+            synthetic = Path(data_dir) / "中文无声视频.mp4"
+            subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                            "-i", "color=c=black:s=128x96:r=4:d=1", "-c:v", "mpeg4", "-metadata",
+                            "title=中文标题", str(synthetic)], check=True, capture_output=True,
+                           **({"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}))
+            imported = httpx.post(f"{base}/local-videos", headers=headers,
+                                  json={"path": str(synthetic)}, timeout=10)
+            assert imported.status_code == 201, imported.text
+            for _ in range(100):
+                local = httpx.get(f"{base}/tasks/{imported.json()['id']}", headers=headers, timeout=3).json()
+                if local["status"] in {"completed", "failed", "blocked"}:
+                    break
+                time.sleep(.05)
+            assert local["status"] == "completed" and local["no_speech_count"] == 1, local
             response = httpx.post(f"{base}/tasks", headers=headers, json={"input_text": VIDEO}, timeout=3)
             assert response.status_code == 201, response.text
             task_id = response.json()["id"]
@@ -70,17 +106,19 @@ def run():
                 time.sleep(.05)
             assert task["status"] == "blocked" and task["error_code"] == "R0_LIVE_COLLECTION_NOT_VERIFIED", task
         finally:
-            stop_process(process)
+            stop_process(process, port, token)
         assert process.poll() is not None
         restarted = start_process(data_dir, port, token)
         try:
             wait_ready(port, token)
             saved = httpx.get(f"{base}/tasks/{task_id}", headers=headers, timeout=3)
             assert saved.status_code == 200 and saved.json()["id"] == task_id
+            settings = httpx.get(f"{base}/settings", headers=headers, timeout=3)
+            assert settings.json()["api_key_configured"] and settings.json()["OPENAI_MODEL"] == "fixture-model"
         finally:
-            stop_process(restarted)
+            stop_process(restarted, port, token)
         return {
-            "type": "REAL_LOCAL_PYTHON_PROCESS_SMOKE",
+            "type": "PACKAGED_SIDECAR_SMOKE" if EXECUTABLE else "REAL_LOCAL_PYTHON_PROCESS_SMOKE",
             "python": sys.version.split()[0],
             "platform": sys.platform,
             "loopback_health": "passed",
@@ -88,10 +126,22 @@ def run():
             "persisted_task_after_restart": True,
             "worker_block_status_expected": True,
             "python_child_terminated": process.poll() is not None and restarted.poll() is not None,
+            "private_settings_persisted": True,
+            "synthetic_chinese_silent_video_imported": True,
+            "real_asr_llm_tested": False,
             "tauri_process_lifecycle_tested": False,
             "douyin_live_tested": False,
         }
 
 
 if __name__ == "__main__":
-    print(json.dumps(run(), ensure_ascii=False, indent=2))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--executable", type=Path)
+    parser.add_argument("--output", type=Path)
+    arguments = parser.parse_args()
+    EXECUTABLE = arguments.executable.resolve(strict=True) if arguments.executable else None
+    report = json.dumps(run(), ensure_ascii=False, indent=2)
+    if arguments.output:
+        arguments.output.parent.mkdir(parents=True, exist_ok=True)
+        arguments.output.write_text(report + "\n", encoding="utf8", newline="\n")
+    print(report)

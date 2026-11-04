@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .insights import InsightGenerator, anchor_insight
 from .media import extract_audio, probe_media
-from .models import TranscriptSegment, VideoAnalysis, VideoRecord
+from .models import TranscriptSegment, VideoAnalysis, VideoRecord, AnalysisRun
 from .transcription import Transcriber
 
 
@@ -70,7 +70,8 @@ async def analyze_media(
     if not asr_model or not llm_model:
         raise ValueError("Transcriber.model_version and generator.model must be explicit for caching")
     transcript_version = version_key("asr", media_hash, asr_model, "pipeline-m1-v1", provenance)
-    analysis_version = version_key("llm", transcript_version, llm_model, "prompt-m1-v1", provenance)
+    model_identity = getattr(generator, "cache_identity", llm_model)
+    analysis_version = version_key("llm", transcript_version, model_identity, "prompt-m1-v2", provenance)
 
     with factory.begin() as session:
         video = session.scalar(select(VideoRecord).where(
@@ -93,6 +94,8 @@ async def analyze_media(
             VideoAnalysis.video_id == video.id, VideoAnalysis.analysis_version == analysis_version,
         ))
         if previous_analysis:
+            from .evidence import assert_analysis_integrity
+            assert_analysis_integrity(session, previous_analysis)
             video.processing_status = "analyzed"
             return ProcessingOutcome(video_id, "analyzed", transcript_version,
                                      analysis_version, True, True)
@@ -144,12 +147,23 @@ async def analyze_media(
         ).order_by(TranscriptSegment.segment_id)))
     if not segments:
         raise RuntimeError("Transcript cache unexpectedly empty")
+    with factory.begin() as session:
+        run = AnalysisRun(video_id=video_id, analysis_version=analysis_version,
+                          model_id=llm_model[:200], provenance=provenance)
+        session.add(run)
+        session.flush()
+        run_id = run.id
     try:
         draft = await generator.generate(segments)
         anchored = anchor_insight(draft, video_id, transcript_version, segments, provenance)
-    except Exception:
+    except (Exception, asyncio.CancelledError) as exc:
         with factory.begin() as session:
-            session.get(VideoRecord, video_id).processing_status = "analysis_failed"
+            interrupted = isinstance(exc, asyncio.CancelledError)
+            session.get(VideoRecord, video_id).processing_status = "transcribed" if interrupted else "analysis_failed"
+            run = session.get(AnalysisRun, run_id)
+            run.status = "interrupted" if interrupted else "failed"
+            run.error_code = type(exc).__name__[:100]
+            run.metrics = getattr(generator, "last_run", {})
         raise
     with factory.begin() as session:
         session.add(VideoAnalysis(
@@ -158,6 +172,9 @@ async def analyze_media(
             result=anchored.model_dump(mode="json"),
         ))
         session.get(VideoRecord, video_id).processing_status = "analyzed"
+        run = session.get(AnalysisRun, run_id)
+        run.status = "completed"
+        run.metrics = getattr(generator, "last_run", {})
     return ProcessingOutcome(video_id, "analyzed", transcript_version,
                              analysis_version, reused_transcript, False)
 

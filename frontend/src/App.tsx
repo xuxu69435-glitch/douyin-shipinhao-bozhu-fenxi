@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { apiRequest, connectBackend, type Evidence, type TaskStatus, type TaskView } from './api';
+import { apiRequest, connectBackend, selectLocalVideo, type Evidence, type TaskStatus, type TaskView } from './api';
 import VideoLibrary from './VideoLibrary';
 import ReportPage from './ReportPage';
+import SettingsPage from './SettingsPage';
 
-type View = 'tasks' | 'videos' | 'reports';
+type View = 'tasks' | 'videos' | 'reports' | 'settings';
 
 const statusText: Record<TaskStatus, string> = {
   queued: '排队中', running: '执行中', pausing: '准备暂停', paused: '已暂停',
-  blocked: '等待采集验收', failed: '执行失败', cancelling: '准备取消', cancelled: '已取消', completed: '已完成'
+  blocked: '需要配置或验收', failed: '执行失败', cancelling: '准备取消', cancelled: '已取消', completed: '已完成'
 };
 
 function formatted(value: string) {
@@ -69,6 +70,18 @@ export default function App() {
     }
   };
 
+  const importVideo = async () => {
+    setSubmitting(true); setWarning('');
+    try {
+      const path = await selectLocalVideo();
+      if (!path) return;
+      const task = await apiRequest<TaskView>('/api/local-videos', 'POST', { path });
+      setSelected(task.id);
+      await refresh();
+    } catch (err) { setWarning(String(err)); }
+    finally { setSubmitting(false); }
+  };
+
   const active = tasks.find(task => task.id === selected);
   return (
     <div className="shell">
@@ -77,13 +90,14 @@ export default function App() {
         <p className="nav-label">工作区</p>
         <nav aria-label="主导航">
           <button className={view === 'tasks' ? 'nav active' : 'nav'} onClick={() => setView('tasks')}>任务中心</button>
-          <button className={view === 'videos' ? 'nav active' : 'nav'} onClick={() => setView('videos')}>视频与字幕 <span>M1</span></button>
-          <button className={view === 'reports' ? 'nav active' : 'nav'} onClick={() => setView('reports')}>博主报告 <span>M2</span></button>
+          <button className={view === 'videos' ? 'nav active' : 'nav'} onClick={() => setView('videos')}>视频与字幕</button>
+          <button className={view === 'reports' ? 'nav active' : 'nav'} onClick={() => setView('reports')}>博主报告</button>
+          <button className={view === 'settings' ? 'nav active' : 'nav'} onClick={() => setView('settings')}>模型与采集设置</button>
         </nav>
-        <div className="sidebar-bottom"><span className={ready ? 'dot online' : 'dot'} />{ready ? '本地后端已连接' : '等待本地后端'}<p>R0 → M2 · 开发版本</p></div>
+        <div className="sidebar-bottom"><span className={ready ? 'dot online' : 'dot'} />{ready ? '本地后端已连接' : '等待本地后端'}<p>本地工作区</p></div>
       </aside>
       <main>
-        <header className="topline"><div>Douyin Analyst <span>/ 本地桌面</span></div><span>数据留在本机 · 仅分析有权访问的内容</span></header>
+        <header className="topline"><div>Douyin Analyst <span>/ 本地桌面</span></div><span>本机保存结果 · 模型服务接收字幕</span></header>
         {warning && <div className="warning" role="alert">{warning}</div>}
         {view === 'tasks' ? <>
           <section className="hero"><div className="eyebrow">WORKSPACE / 001</div><h1>从视频出发，<br /><em>理解创作者的公开表达。</em></h1><p>粘贴抖音博主主页、视频链接或分享文本，创建可追溯的分析任务。</p></section>
@@ -92,13 +106,14 @@ export default function App() {
             <textarea id="source" value={input} onChange={event => setInput(event.target.value)} placeholder="粘贴 https://www.douyin.com/user/... 或作品链接" rows={3} />
             <div className="create-controls"><div className="limit-group"><span>博主视频数量</span><button className={limit === 10 ? 'chip selected' : 'chip'} onClick={() => setLimit(10)}>最近10条</button><button className={limit === 30 ? 'chip selected' : 'chip'} onClick={() => setLimit(30)}>最近30条</button></div>
               <button className="primary" disabled={!ready || submitting || !input.trim()} onClick={() => void createTask()}>{submitting ? '正在创建…' : '创建任务'} <span aria-hidden="true">↗</span></button></div>
-            <p className="disclaimer">分析与报告模块已具备独立验证入口。真实抖音采集仍需R0验收；在此之前新建任务将明确显示为“等待采集验收”。</p>
+            <div className="actions"><button className="plain" disabled={!ready || submitting} onClick={() => void importVideo()}>选择本地视频分析</button><button className="plain" onClick={() => setView('settings')}>配置模型 API</button></div>
+            <p className="disclaimer">首次使用请配置模型 API。抖音采集需在设置中自行开启并验证；也可选择本地视频独立测试分析链路。</p>
           </section>
           <section className="history"><div className="section-heading"><h2>历史任务</h2><span>{tasks.length} 项</span></div>
             {tasks.length === 0 ? <div className="empty">暂无任务。先创建一个视频或博主分析任务。</div> : <div className="task-list">
               {tasks.map(task => <article key={task.id} className={selected === task.id ? 'task-row expanded' : 'task-row'}>
-                <button className="task-title" onClick={() => setSelected(selected === task.id ? null : task.id)}><span><strong>{task.source_kind === 'profile' ? '博主分析' : task.source_kind === 'video' ? '单视频分析' : '分享短链解析'}</strong><small>{formatted(task.created_at)} · {task.max_videos} 条上限</small></span><span className={`task-status status-${task.status}`}>{statusText[task.status]}</span></button>
-                {selected === task.id && <div className="task-detail"><a href={task.source_url} target="_blank" rel="noreferrer">{task.source_url}</a><p>阶段：{task.phase} · 成功 {task.success_count} / 失败 {task.failure_count} / 无有效语音 {task.no_speech_count}</p>
+                <button className="task-title" onClick={() => setSelected(selected === task.id ? null : task.id)}><span><strong>{task.source_kind === 'profile' ? '博主分析' : task.source_kind === 'video' ? '单视频分析' : task.source_kind === 'local' ? '本地视频分析' : '分享短链解析'}</strong><small>{formatted(task.created_at)} · {task.max_videos} 条上限</small></span><span className={`task-status status-${task.status}`}>{statusText[task.status]}</span></button>
+                {selected === task.id && <div className="task-detail">{task.source_kind === 'local' ? <span>{task.source_url}</span> : <a href={task.source_url} target="_blank" rel="noreferrer">{task.source_url}</a>}<p>阶段：{task.phase} · 成功 {task.success_count} / 失败 {task.failure_count} / 无有效语音 {task.no_speech_count}</p>
                   {task.error_message && <p className="reason"><b>{task.error_code}：</b>{task.error_message}</p>}
                   <div className="actions">{['queued','running','blocked'].includes(task.status) && <button onClick={() => void change(task, 'pause')}>暂停</button>}
                     {['paused', 'blocked', 'failed'].includes(task.status) && <button onClick={() => void change(task, 'resume')}>恢复</button>}
@@ -108,7 +123,7 @@ export default function App() {
             </div>}
             {active && <p className="tip">已选任务：{active.id}</p>}
           </section>
-        </> : view === 'videos' ? <VideoLibrary ready={ready} targetEvidence={targetEvidence} /> : <ReportPage ready={ready} tasks={tasks} onEvidence={(ref) => { setTargetEvidence(ref); setView('videos'); }} />}
+        </> : view === 'videos' ? <VideoLibrary ready={ready} targetEvidence={targetEvidence} /> : view === 'settings' ? <SettingsPage ready={ready} /> : <ReportPage ready={ready} tasks={tasks} onEvidence={(ref) => { setTargetEvidence(ref); setView('videos'); }} />}
       </main>
     </div>
   );
