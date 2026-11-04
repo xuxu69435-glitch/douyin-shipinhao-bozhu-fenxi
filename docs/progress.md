@@ -14,6 +14,7 @@
 - 依赖记录：backend/requirements-windows.lock、frontend/package-lock.json、frontend/src-tauri/Cargo.lock。Sidecar 带第三方许可库存清单，不携带模型权重或用户配置。
 - Git：两条历史 Author/Committer 已修正为 xuxu69435，原始历史已另存仓库外备份。当前 main 分支与后续提交使用同一用户身份，origin 指向用户提供的仓库；未推送。
 - API 接入位置与顺序见 api-setup.md。安装后的最终验证结果与路径在 testing/windows-desktop-delivery.md 中记录。
+- 最终安装版已更新到 `E:\1bishe\Douyin Analyst`，安装后端与源码打包文件哈希一致；两次桌面自检及中文无声视频导入、加密配置和重启持久化检查通过，详见 testing/installed-desktop-smoke.json 与 testing/installed-backend-smoke.json。安装包 257.18 MiB，校验值见 testing/windows-installer.json。
 
 ### 仍待用户或后续验证
 

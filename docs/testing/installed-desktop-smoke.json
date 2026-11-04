@@ -6,7 +6,7 @@
     {
       "asr_native_libraries_imported": true,
       "authenticated_proxy": true,
-      "backend_pid": 9620,
+      "backend_pid": 16036,
       "blocked_sample": true,
       "bundled_ffmpeg": true,
       "bundled_ffprobe": true,
@@ -17,10 +17,10 @@
         "f2": "0.0.1.7",
         "faster-whisper": "1.2.1"
       },
-      "previous_task_count": 2,
+      "previous_task_count": 4,
       "real_asr_llm_tested": false,
       "settings_key_not_exposed": true,
-      "sidecar_pid": 9620,
+      "sidecar_pid": 16036,
       "synthetic_media_range": true,
       "type": "OFFLINE_TAURI_SIDECAR_SMOKE",
       "webview_playback_tested": false,
@@ -30,7 +30,7 @@
     {
       "asr_native_libraries_imported": true,
       "authenticated_proxy": true,
-      "backend_pid": 26688,
+      "backend_pid": 33480,
       "blocked_sample": true,
       "bundled_ffmpeg": true,
       "bundled_ffprobe": true,
@@ -41,10 +41,10 @@
         "f2": "0.0.1.7",
         "faster-whisper": "1.2.1"
       },
-      "previous_task_count": 3,
+      "previous_task_count": 5,
       "real_asr_llm_tested": false,
       "settings_key_not_exposed": true,
-      "sidecar_pid": 26688,
+      "sidecar_pid": 33480,
       "synthetic_media_range": true,
       "type": "OFFLINE_TAURI_SIDECAR_SMOKE",
       "webview_playback_tested": false,

@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-04",
+  "source_commit": "e6e815d9447ad52f81ed30a3507cc8306dee12ba",
+  "installer": "frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.0_x64-setup.exe",
+  "size_bytes": 269670536,
+  "sha256": "426af7546b7368353fed50450ab81364929c70da9759a21fe2b991213bb9c773",
+  "installed_executable": "E:\\1bishe\\Douyin Analyst\\douyin-analyst-desktop.exe",
+  "installed_backend_sha256": "f59a25e8b3c6ba389858c7acbe1cba032fbbe6379338eb8c26544ba8840f042d",
+  "packaged_backend_sha256": "f59a25e8b3c6ba389858c7acbe1cba032fbbe6379338eb8c26544ba8840f042d",
+  "installer_exit_code": 0,
+  "compression": "zlib",
+  "weights_bundled": false,
+  "real_platform_tested": false,
+  "real_model_tested": false,
+  "ui_playback_tested": false
+}

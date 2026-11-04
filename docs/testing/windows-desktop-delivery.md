@@ -8,6 +8,8 @@
 
 这是供本机真实样本测试的安装构建，不能据此宣布 R0、真实模型或全部产品体验验收完成。
 
+最终安装包为 **257.18 MiB**，源码提交 `e6e815d`。SHA-256：`426af7546b7368353fed50450ab81364929c70da9759a21fe2b991213bb9c773`。详细版本与哈希见 [安装包清单](windows-installer.json)。安装后后端哈希与打包源文件一致。
+
 ## 已实际通过
 
 | 检查 | 结果 |
@@ -20,7 +22,7 @@
 | 安装后两次启动 | 认证代理、受限路径、配置不回显密钥、历史持久化、签名媒体 Range、退出无遗留后端进程均通过 |
 | 独立依赖 | 将桌面子进程 PATH 限为 Windows System32，仍能找到内置 FFmpeg/FFprobe 并导入 ASR 本机库，无需系统 Python/Node/Rust |
 
-证据：[安装后自检 JSON](installed-desktop-smoke.json)、[打包后端自检 JSON](packaged-sidecar-smoke.json)、[首次发行版桌面自检 JSON](desktop-smoke.json)。所有测试数据均在独立 `.media/desktop-smoke` 目录，不进入用户正式分析数据。
+证据：[安装后桌面自检 JSON](installed-desktop-smoke.json)、[安装后端及中文视频导入 JSON](installed-backend-smoke.json)、[打包后端自检 JSON](packaged-sidecar-smoke.json)、[首次发行版桌面自检 JSON](desktop-smoke.json)。桌面测试数据位于独立 `.media/desktop-smoke` 目录，后端自检使用临时目录，不进入用户正式分析数据。
 
 本次安装包包含 F2 0.0.1.7、faster-whisper 1.2.1、CTranslate2 4.8.5、ONNX Runtime 1.31.1 及 FFmpeg/FFprobe；没有下载 Whisper 权重，没有调用付费模型或真实抖音采集。
 
