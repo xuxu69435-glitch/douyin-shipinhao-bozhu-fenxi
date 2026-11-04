@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "douyin-analyst-backend"
+version = "0.1.0"
+description = "Local evidence-oriented Douyin creator analysis backend"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "sqlalchemy>=2.0,<3",
+  "pydantic>=2.9,<3",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2", "httpx>=0.27,<1"]
+collector-f2 = ["f2>=0.0.1.7,<0.1"]
+asr = ["faster-whisper>=1.1,<2"]
+packaging = ["pyinstaller>=6.11,<7"]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+markers = [
+    "live: requires permitted real Douyin access; never claimed as a mock test",
+]
