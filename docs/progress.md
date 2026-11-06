@@ -2,9 +2,9 @@
 
 范围：仅抖音，Windows本地Tauri 2桌面应用。**“代码已实现”≠“真实抖音通过”≠“Windows安装包通过”。**
 
-## 本轮修复与桌面交付（最新状态）
+## Windows 桌面交付（最新状态）
 
-- 用户决定：真实样本、模型 API 及效果测试由用户自行接入；LangGraph 审查 Agent 暂缓，采用固定流程与轻量 harness。
+- 当前采用固定流程与轻量 harness，LangGraph 审查 Agent 暂缓；真实样本、模型 API 及效果测试待验证。
 - Windows / Python 3.12.2，完整后端测试 **64 passed**。TypeScript/Vite 构建、Rust cargo check、发行版编译及 NSIS 构建均通过。
 - 两次真实桌面离线自检通过：认证代理、密钥不回显、合成视频签名 Range、打包语音库加载、内置 FFmpeg/FFprobe、重启历史持久化与后端进程树退出。详见 testing/desktop-smoke.json；没有据此声称实际 WebView 播放、真实采集或真实模型推理通过。
 - 已补基础 httpx 依赖、采集发布时间持久化、短链单视频数量修正、原生文件选择及导出保存、模型与采集设置、连接测试、Windows DPAPI 密钥保存、运行时组件打包及工作目录管理。
@@ -12,13 +12,12 @@
 - 真实合成样本重现 Windows GBK 解码 FFprobe 中文路径/元数据时崩溃，已指定 UTF-8 并加入中文文件名及标题回归测试。
 - 已补有限请求/输出/重试、长字幕分段汇总、模型服务参与缓存版本、缓存证据核查及 analysis_runs 运行记录；中断与失败不丢已有字幕。机制及取舍见 research/harness-decision.md。
 - 依赖记录：backend/requirements-windows.lock、frontend/package-lock.json、frontend/src-tauri/Cargo.lock。Sidecar 带第三方许可库存清单，不携带模型权重或用户配置。
-- Git：两条历史 Author/Committer 已修正为 xuxu69435，原始历史已另存仓库外备份。当前 main 分支与后续提交使用同一用户身份，origin 指向用户提供的仓库；未推送。
 - API 接入位置与顺序见 api-setup.md。安装后的最终验证结果与路径在 testing/windows-desktop-delivery.md 中记录。
 - 最终安装版已更新到 `E:\1bishe\Douyin Analyst`，安装后端与源码打包文件哈希一致；两次桌面自检及中文无声视频导入、加密配置和重启持久化检查通过，详见 testing/installed-desktop-smoke.json 与 testing/installed-backend-smoke.json。安装包 257.18 MiB，校验值见 testing/windows-installer.json。
 
-### 仍待用户或后续验证
+### 待验证
 
-真实抖音作者、第二页和可播放媒体；真实 ASR/LLM 质量与费用；WebView 实际播放和原生文件对话框交互；10/30 视频的真实恢复/失败表现；通用同义主题归并与主体身份核实。主营业务证据不足仍保持留空。M3 Agent 按用户决定暂缓，不列为本轮交付阻塞。
+真实抖音作者、第二页和可播放媒体；真实 ASR/LLM 质量与费用；WebView 实际播放和原生文件对话框交互；10/30 视频的真实恢复/失败表现；通用同义主题归并与主体身份核实。主营业务证据不足仍保持留空。M3 Agent 暂缓实现。
 
 以下保留修复前的检查快照及早期 Linux 验证记录；不能用其中旧的“工具链缺失”描述覆盖上述最新结果。
 
@@ -26,11 +25,10 @@
 
 - 已在 Windows / Python 3.12.2 隔离环境运行后端测试：**50 passed**；本地 Python 子进程的健康检查、认证、重启持久化与退出检查通过，不代表 Tauri/PyInstaller 生命周期通过。
 - 前端依赖安装成功，**完整 TypeScript 检查及 Vite 构建通过**。实际执行 `npm run tauri:build` 因缺少 cargo 失败，没有生成 Windows 安装包。
-- GitHub 目标仓库当前为空；本地工程没有 remote，尚未提交或推送本次检查记录。
 - 纯基础后端安装缺少 httpx 运行依赖，实际导入失败；F2 SDK 可选依赖可安装，但导入采集模块会请求远端令牌，受限网络下失败；R0、真实 ASR/LLM、M3 和 Windows 安装包仍未通过。
 - 新发现的发布时间落库、固定主题别名、主体核实及 Sidecar 打包等缺漏，连同前端安装/构建结果，统一记录在 [Windows 运行就绪检查](testing/windows-readiness-2026-11-04.md)。以下原阶段矩阵与 Linux 执行证据保留为历史记录。
 
-## 阶段验收矩阵
+## 阶段验收矩阵（早期记录）
 
 | 阶段 | 已实施并可核对 | 自动化结果 | 仍不通过/缺失 |
 | --- | --- | --- | --- |
@@ -41,14 +39,14 @@
 | **M3：LangGraph审查** | 确定按已有字幕和报告审查、限制调用与预算，不扩充采集范围 | 未测试 | **尚未实现**。前面的真实验收与依赖未满足 |
 | **M4：Windows交付** | PowerShell打包脚本与Rust外部二进制配置存在 | 后端本地测试结果如下 | **没有Windows安装包或打包验收**。缺Rust、Node依赖和Windows构建环境 |
 
-## 本轮实际执行证据
+## 早期 Linux 验证记录
 
 - OS/Python：Linux容器，Python **3.13.5**；目标Python 3.12仍需在Windows运行。
 - 后端测试：`cd backend && python -m pytest -q -o addopts=''`，**50 passed**，见 [`testing/backend-pytest.txt`](testing/backend-pytest.txt)。
 - FFmpeg：`ffmpeg 7.1.5`，运行媒体生成、FFprobe、FFmpeg音轨抽取、媒体HTTP Range。ASR和LLM均使用标记为`test_fixture`的测试替身，**不能算作真实模型测试**。
 - TypeScript：全局TS `transpileModule`仅验证4个TS/TSX文件**语法**，0语法错误。`npm install --offline`失败`ENOTCACHED`；`npm run build`因缺React/Vite/Tauri依赖而失败。详情：[`testing/frontend-build.md`](testing/frontend-build.md)。
 - Rust/Cargo/NSIS：未运行，本容器没有相应工具链和Windows环境。
-- 外网：GitHub通过连接器读取；Linux shell无法解析`github.com`和`registry.npmjs.org`，无法执行实网抖音端点调用；用户未提供合法可访问样本/会话。没有伪造真实平台结果。
+- 网络：调研可读取 GitHub 源码；Linux shell 无法解析 `github.com` 和 `registry.npmjs.org`，未执行真实抖音端点调用。
 
 ## 代码控制与真实采集门槛
 
@@ -59,15 +57,9 @@
 - 审核主体归属：模型说“creator”时也暂不设置`creator_identity_verified=true`；程序不会据此断言博主个人喜好。主营业务无公开核实证据则不推断。
 - 报告/字幕导出时重新验证数据库对应的字幕版本、视频与时间范围；来源删除或修改则返回HTTP 409，不返回看似有效的旧证据。
 
-## 下一阶段精确入口
+## 后续验证入口
 
-1. 将本独立工程移入实际Windows仓库前，先在目标仓库运行`git status`和检查现有分支，避免覆盖你的已有改动。本容器无法直接查看Windows磁盘。
-2. Python 3.12安装依赖：`python -m pip install -e ".\\backend[test,collector-f2,asr,packaging]"`，运行50项测试。使用经过允许的真实主页、作品链接运行`live_douyin_probe.py`，保存去敏的`docs/testing/live-r0.json`。**只有主页作者+视频作者+第二页不同ID+本地视频FFprobe均为真，R0才可标为通过。**
-3. 真实ASR/LLM：用有权处理的本地MP4运行`analyze_local_video.py`，检查字幕段时间、证据Pydantic校验、API结果和费用；确认实际模型ID、权重、语言效果。
-4. Windows：`scripts/build-sidecar.ps1`、`cd frontend && npm install && npm run build && npm run tauri:dev`；重点验证全量可选依赖是否正确打包、后端自动启动/退出与不存在孤儿进程、端口冲突、签名媒体播放、数据持久化，最后执行`npm run tauri:build`。当前脚本可能需要增加PyInstaller隐藏依赖/权重和FFmpeg打包支持，**尚未验证完整安装包**。
-5. R0、M1、M2真实验收后再实现与运行M3 LangGraph审查Agent：检索范围限定已存字幕，限制工具、模型请求、重分析次数、总token预算；每次审查修订必须保存引用和审计日志。
-
-## Git记录
-
-- `R0 M0`本地独立代码基线已经提交。后续增量有本地提交记录；**并未推送到用户原有GitHub仓库**。
-- 早期代码基线是独立生成的源码工程，之后已在本机继续开发，并配置用户提供的远端仓库。
+1. 按 [API 接入说明](api-setup.md) 配置模型服务，用有权处理的本地 MP4 验证转写、字幕时间、摘要及证据引用，记录模型版本、质量和费用。
+2. 使用真实主页和作品链接运行 `scripts/live_douyin_probe.py`，保存去敏的 `docs/testing/live-r0.json`。主页作者、作品作者、第二页不同 ID 及下载文件 FFprobe 均成功后，R0 才可标为通过。
+3. 在 Windows 安装版中人工验证媒体播放、文件选择及导出保存，并检查真实 10/30 视频任务的暂停、取消、恢复和失败记录。
+4. 根据真实样本结果评估是否加入 M3 证据审查 Agent；继续限制在已存字幕内，不自动扩大采集范围。

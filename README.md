@@ -2,7 +2,7 @@
 
 Windows 本地桌面应用：Tauri 2 + React + Python 3.12 / FastAPI + SQLite，支持任务管理、本地视频分析、可选抖音采集、字幕与证据定位、博主报告导出。
 
-当前已有可构建的 Windows 安装版及离线桌面生命周期验证。**真实抖音、真实 Whisper 推理和大模型分析质量仍由用户用真实样本验收，不能用自动化测试代替。** LangGraph 审查 Agent 按用户决定暂缓，先使用固定分析流程与轻量 harness。
+当前已有可构建的 Windows 安装版，已通过离线桌面生命周期验证。真实抖音采集、Whisper 推理和大模型分析质量仍待真实样本验证。当前采用固定分析流程与轻量 harness，LangGraph 审查 Agent 暂缓实现。
 
 ## 开始使用
 
@@ -41,7 +41,7 @@ frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.0_x64-setup.exe
 
 需要 Python 3.12、Node 20+、Rust MSVC 工具链、Visual Studio C++ Build Tools / Windows SDK 及 WebView2。FFmpeg 用于测试和选择内置媒体工具的构建。
 
-本机已具备项目虚拟环境和工作区专用 Rust；构建脚本自动查找上一级 `.toolchains`，不修改系统 PATH。全新环境可使用 Python 自带 venv 和 pip：
+构建脚本支持查找仓库上一级 `.toolchains` 内的 Rust 工具链。全新环境可使用 Python 自带 venv 和 pip：
 
 ```powershell
 py -3.12 -m venv backend\.venv
@@ -75,8 +75,6 @@ ExecutionPolicy 参数仅用于运行当前已审阅的本地脚本，不修改�
 
 R0 必须实际证明作者识别、第二页不同作品 ID 和下载后 FFprobe 成功。网络、授权或平台拒绝时保留失败记录，不绕过访问控制。
 
-## 源码与提交
+## 源码结构
 
 `backend/app` 为后端，`frontend/src` 为界面，`frontend/src-tauri` 为桌面宿主，`scripts` 为验证及构建入口。技术复用和许可证来源记录于 [GitHub 调研](docs/research/github-review.md)。
-
-本地提交已使用用户自己的 Git 身份，后续操作见 [提交说明](docs/git-submission.md)。安装包、模型权重、密钥、Cookie、日志和媒体均不作为源码提交。第三方运行库清单位于打包资源的 THIRD_PARTY_NOTICES.txt；本机安装构建不等于已完成面向公众的许可证及对应源代码分发手续。

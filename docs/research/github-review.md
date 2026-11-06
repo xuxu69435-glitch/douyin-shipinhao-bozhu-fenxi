@@ -8,7 +8,7 @@ The source review below is the earlier baseline. On the Windows machine, the dec
 
 The PyPI dependency is not pinned to the GitHub commit reviewed below. Version/API compatibility and actual platform behavior must be accepted against the exact installed distribution before enabling the collector. The BiliNote Rust integration file at the recorded commit was re-read through the GitHub connector; no source was copied into the application during this check.
 
-Python 3.12.2 backend tests now pass **50/50 on Windows**, and the full frontend build passes. Tauri packaging was attempted and stops at missing `cargo`. Detailed findings: [Windows readiness check](../testing/windows-readiness-2026-11-04.md).
+The initial Windows check passed **50/50 backend tests** on Python 3.12.2 and the full frontend build; Tauri packaging stopped at missing `cargo`. Historical findings: [Windows readiness check](../testing/windows-readiness-2026-11-04.md). Subsequent Windows builds passed 64 backend tests, release compilation, NSIS packaging and installed-desktop offline checks; see [desktop delivery results](../testing/windows-desktop-delivery.md).
 
 ## 1. Repositories and adoption
 
@@ -56,4 +56,4 @@ On Windows with authorized public sample profile and video URLs, install F2 and 
 
 If authorized access needs a cookie, add `--cookie-file ".secrets\douyin-cookie.txt"`. This is not automatic cookie extraction. Do not share the cookie, signed URLs or video media without authorization. Verify that `page_2_confirmed` is `true` AND `media_playable_confirmed` is `true` in the real output, and inspect actual media ID/author fields for validity. A status of `false` is an R0 failure, not a reason to manufacture success.
 
-**Missing right now:** the user's Windows repository and live networking, authorized sample URLs/access, Windows Tauri compile + child-process lifecycle tests. R0 live acceptance remains **NOT PASSED**.
+**Outstanding live checks:** creator identity, second-page works and playable downloads using permitted real sample URLs/access. R0 live acceptance remains **NOT PASSED**.

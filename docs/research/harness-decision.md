@@ -12,7 +12,6 @@
 
 - [Anthropic：Building effective agents](https://www.anthropic.com/research/building-effective-agents)：区分预设代码路径的 workflow 与由模型动态控制流程的 Agent；对明确任务优先使用简单流程和可编程检查。借鉴这一区分，不复制框架源码。
 - [Anthropic：Effective harnesses for long-running agents](https://www.anthropic.com/research/effective-harnesses-for-long-running-agents)：讨论跨会话进度、环境准备和验证。其主要实验是长程编码，不能直接视作本项目视频分析效果的证据。
-- [OpenAI Developers：open agent harness integration](https://developers.openai.com/blog/codex-as-a-platform)：说明 harness 承担循环、状态、工具及生命周期，业务应用仍负责业务记录与控制。这里只参考概念，不采用其编码 Agent、SDK 或 app-server。
 - [OpenAI：Structured model outputs](https://developers.openai.com/api/docs/guides/structured-outputs)：JSON mode 不替代 schema 验证。兼容服务采用 JSON mode，再由本项目验证结构及证据。
 
 ## 已落实的轻量机制
@@ -35,6 +34,6 @@
 
 ## 何时再引入 Agent
 
-用户准备一批有人工标注的真实视频后，比较固定流程在错误引用、主体归属、主题归并与遗漏上的表现。如果失败主要需要查阅已存上下文、有限重分析及结论修订，再增加只读已有材料为主的单个审查 Agent，并与固定流程比较质量、延迟和费用。没有这种证据前，优先改善提示、分段和确定性校验。
+准备一批有人工标注的真实视频后，比较固定流程在错误引用、主体归属、主题归并与遗漏上的表现。如果失败主要需要查阅已存上下文、有限重分析及结论修订，再增加只读已有材料为主的单个审查 Agent，并与固定流程比较质量、延迟和费用。没有这种证据前，优先改善提示、分段和确定性校验。
 
 LangGraph 仍是后续可选实现入口，当前没有作为项目运行依赖安装或启用。
