@@ -1,0 +1,39 @@
+{
+  "version": "0.1.1",
+  "date": "2026-11-06",
+  "test_type": "LIVE_SHARE_REDIRECT_AND_ANONYMOUS_COLLECTION",
+  "resolved": [
+    {
+      "input_kind": "profile",
+      "short_url": "https://v.douyin.com/1MzzlZTuZcc/",
+      "test_type": "live_redirect_only",
+      "kind": "profile",
+      "url": "https://www.douyin.com/user/MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+      "platform_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+      "passed": true
+    },
+    {
+      "input_kind": "video",
+      "short_url": "https://v.douyin.com/NE2hkgBNwHM/",
+      "test_type": "live_redirect_only",
+      "kind": "video",
+      "url": "https://www.douyin.com/video/7699679130752748809",
+      "platform_id": "7699679130752748809",
+      "passed": true
+    }
+  ],
+  "collection": {
+    "test_type": "live_anonymous_collection",
+    "real_asr": false,
+    "real_llm": false,
+    "video": {
+      "passed": false,
+      "error_type": "APIResponseError",
+      "message": "HTTP状态码错误： Status Code: 403"
+    }
+  },
+  "real_asr": false,
+  "real_llm": false,
+  "pagination_verified": false,
+  "media_download_verified": false
+}

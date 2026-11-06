@@ -52,17 +52,18 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
           <input value={settings.OPENAI_MODEL} placeholder="填写服务商提供的实际模型 ID"
             onChange={event => setSettings({ ...settings, OPENAI_MODEL: event.target.value })}/>
         </label>
-        <label>API 密钥 <small>OPENAI_API_KEY</small>
+        <label className="wide-field">API 密钥 <small>OPENAI_API_KEY</small>
           <input type="password" autoComplete="off" value={key} placeholder={settings.api_key_configured ? '已配置；留空保持原密钥' : '粘贴你的 API Key'}
             onChange={event => { setKey(event.target.value); setClearKey(false); }}/>
           <span>{settings.api_key_encrypted ? '使用 Windows 用户加密，保存在本机应用数据目录。' : '仅保存于本机应用数据目录，请保护好该目录。'}密钥不会回显。</span>
         </label>
         {settings.api_key_configured && <label className="checkbox"><input type="checkbox" checked={clearKey} onChange={event => setClearKey(event.target.checked)}/>清除已保存的密钥</label>}
-        <label>本地语音识别模型
+        <label className="wide-field">本地语音识别模型
           <input value={settings.whisper_model} placeholder="small，或已下载模型的完整目录"
             onChange={event => setSettings({ ...settings, whisper_model: event.target.value })}/>
           <span>语音识别在本机运行。首次使用模型名称时会下载权重，也可填写本地模型目录。</span>
         </label>
+        <details className="collector-settings"><summary>抖音采集设置 <span>{settings.enable_live ? '已启用' : '未启用'}</span></summary>
         <label className="checkbox"><input type="checkbox" checked={settings.enable_live} onChange={event => setSettings({ ...settings, enable_live: event.target.checked })}/>启用真实抖音采集</label>
         <p className="muted">默认关闭。仅在你确认有权访问样本并准备进行真实测试后开启；本地视频分析不需要开启此项。</p>
         <label>抖音 Cookie 文件路径（可选）
@@ -70,6 +71,7 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
             onChange={event => setSettings({ ...settings, cookie_file: event.target.value })}/>
           <span>不会从浏览器提取登录状态。文件只在本机读取。</span>
         </label>
+        </details>
         <div className="actions"><button className="primary" disabled={busy} onClick={() => void save()}>保存配置</button>
           <button className="plain" disabled={busy} onClick={() => void save(true)}>{busy ? '正在处理…' : '保存并测试 API'}</button></div>
         <p className="muted">测试 API 会发送一句示例字幕并产生少量模型用量，不会采集抖音或下载语音模型。</p>

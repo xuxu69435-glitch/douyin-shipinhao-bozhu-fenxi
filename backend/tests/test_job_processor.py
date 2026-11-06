@@ -147,6 +147,49 @@ def test_errors_are_redacted():
     assert "abcd" not in safe
 
 
+def test_short_link_platform_denial_preserves_resolved_video_and_can_resume(tmp_path, monkeypatch):
+    from app.links import ParsedLink
+
+    class AccessDenied(Exception):
+        status_code = 403
+
+    class Provider(ProviderFixture):
+        denied = True
+
+        async def video_detail(self, url):
+            if self.denied:
+                raise AccessDenied("platform refused request")
+            return await super().video_detail(url)
+
+    async def resolved(_url):
+        return ParsedLink(kind="video", url="https://www.douyin.com/video/7000000000000000000",
+                          platform_id="7000000000000000000")
+
+    monkeypatch.setattr("app.job_processor.resolve_short_link", resolved)
+    token = "test-share-xxxxxxx-yyyyyyyyy-zzzzzzz"
+    headers = {"X-Analyst-Token": token}
+    app = create_app(tmp_path, token)
+    provider = Provider()
+    app.state.worker.processor = LiveTaskProcessor(
+        app.state.session_factory, tmp_path, provider, ASRFixture(), LLMFixture(),
+        fake_media_download, provenance="test_fixture",
+    )
+    with TestClient(app) as client:
+        task = client.post("/api/tasks", headers=headers,
+                           json={"input_text": "分享文本 https://v.douyin.com/abcdef/", "max_videos": 10}).json()
+        blocked = until_done(client, headers, task["id"])
+        assert blocked["status"] == "blocked"
+        assert blocked["error_code"] == "DOUYIN_ACCESS_DENIED"
+        assert "HTTP 403" in blocked["error_message"]
+        assert blocked["source_kind"] == "video" and blocked["max_videos"] == 1
+        assert blocked["source_url"] == "https://www.douyin.com/video/7000000000000000000"
+        assert client.get(f"/api/tasks/{task['id']}/videos", headers=headers).json() == []
+        provider.denied = False
+        assert client.post(f"/api/tasks/{task['id']}/resume", headers=headers).status_code == 200
+        done = until_done(client, headers, task["id"])
+        assert done["status"] == "completed" and done["success_count"] == 1
+
+
 def test_completed_media_can_be_reused_when_new_cdn_address_is_missing(tmp_path):
     from dataclasses import replace
     from app.models import AnalysisRun

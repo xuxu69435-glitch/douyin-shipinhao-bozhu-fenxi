@@ -63,7 +63,7 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
             await worker.stop()
             engine.dispose()
 
-    app = FastAPI(title="Douyin Analyst", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Douyin Analyst", version="0.1.1", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://tauri.localhost", "tauri://localhost", "http://localhost:5173", "http://127.0.0.1:5173"],

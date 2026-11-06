@@ -10,8 +10,8 @@ ALLOWED_HOSTS = frozenset(
     {"douyin.com", "www.douyin.com", "m.douyin.com", "v.douyin.com", "iesdouyin.com", "www.iesdouyin.com"}
 )
 URL_PATTERN = re.compile(r"https?://[^\s<>\"'，。；！？、）】]+", re.IGNORECASE)
-VIDEO_PATTERN = re.compile(r"^/(?:video|note)/(\d{8,25})(?:/|$)")
-PROFILE_PATTERN = re.compile(r"^/user/([A-Za-z0-9_.-]{8,200})(?:/|$)")
+VIDEO_PATTERN = re.compile(r"^/(?:share/)?(?:video|note)/(\d{8,25})(?:/|$)")
+PROFILE_PATTERN = re.compile(r"^/(?:share/)?user/([A-Za-z0-9_.-]{8,200})(?:/|$)")
 
 
 class InvalidDouyinLink(ValueError):
@@ -62,14 +62,23 @@ async def resolve_short_link(short_url: str) -> ParsedLink:
     async with httpx.AsyncClient(timeout=httpx.Timeout(12, connect=5), follow_redirects=False) as client:
         url = current.url
         for _ in range(6):
-            response = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            if response.status_code not in (301, 302, 303, 307, 308):
-                raise InvalidDouyinLink("分享短链未返回可识别的抖音主页或视频跳转")
+            try:
+                response = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            except httpx.RemoteProtocolError as exc:
+                raise InvalidDouyinLink("分享链接返回了不合法的跳转地址") from exc
+            if response.status_code in (403, 429):
+                raise InvalidDouyinLink(f"抖音暂时拒绝访问分享链接（HTTP {response.status_code}），请确认链接可访问后再试")
+            if response.status_code not in (301, 302, 303, 307, 308) or not response.headers.get("location"):
+                raise InvalidDouyinLink("分享链接未返回可识别的主页或作品地址，请确认链接仍有效")
             from urllib.parse import urljoin
             candidate = urljoin(url, response.headers.get("location", ""))
-            parsed = urlsplit(candidate)
+            try:
+                parsed = urlsplit(candidate)
+                port = parsed.port
+            except ValueError as exc:
+                raise InvalidDouyinLink("分享链接的跳转地址格式不合法") from exc
             if (parsed.scheme != "https" or parsed.hostname not in ALLOWED_HOSTS
-                    or parsed.username or parsed.password or parsed.port not in (None, 443)):
+                    or parsed.username or parsed.password or port not in (None, 443)):
                 raise InvalidDouyinLink("分享链接跳转目标不属于允许的抖音站点")
             try:
                 result = parse_douyin_input(candidate)

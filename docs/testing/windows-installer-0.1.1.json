@@ -1,0 +1,11 @@
+{
+  "version": "0.1.1",
+  "date": "2026-11-06",
+  "installer_exit_code": 0,
+  "installer_size_bytes": 269675124,
+  "installer_sha256": "cc1ef78f5556dd1904c4e996f5c80ee31a1d2c779de17526725e0170af29f2b1",
+  "backend_matches_packaged_source": true,
+  "existing_tasks_preserved": true,
+  "existing_settings_preserved": true,
+  "installed_path": "E:/1bishe/Douyin Analyst/douyin-analyst-desktop.exe"
+}

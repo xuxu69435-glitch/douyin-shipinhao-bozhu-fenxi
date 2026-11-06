@@ -8,7 +8,7 @@ type View = 'tasks' | 'videos' | 'reports' | 'settings';
 
 const statusText: Record<TaskStatus, string> = {
   queued: '排队中', running: '执行中', pausing: '准备暂停', paused: '已暂停',
-  blocked: '需要配置或验收', failed: '执行失败', cancelling: '准备取消', cancelled: '已取消', completed: '已完成'
+  blocked: '需要处理', failed: '执行失败', cancelling: '准备取消', cancelled: '已取消', completed: '已完成'
 };
 
 function formatted(value: string) {
@@ -25,6 +25,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [warning, setWarning] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [historyPage, setHistoryPage] = useState(0);
 
   const refresh = async () => {
     const data = await apiRequest<TaskView[]>('/api/tasks');
@@ -51,6 +52,7 @@ export default function App() {
     try {
       const task = await apiRequest<TaskView>('/api/tasks', 'POST', { input_text: input, max_videos: limit });
       setInput('');
+      setHistoryPage(0);
       setSelected(task.id);
       await refresh();
     } catch (error) {
@@ -77,12 +79,16 @@ export default function App() {
       if (!path) return;
       const task = await apiRequest<TaskView>('/api/local-videos', 'POST', { path });
       setSelected(task.id);
+      setHistoryPage(0);
       await refresh();
     } catch (err) { setWarning(String(err)); }
     finally { setSubmitting(false); }
   };
 
   const active = tasks.find(task => task.id === selected);
+  const pageCount = Math.max(1, Math.ceil(tasks.length / 8));
+  const page = Math.min(historyPage, pageCount - 1);
+  const visibleTasks = tasks.slice(page * 8, (page + 1) * 8);
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -100,10 +106,11 @@ export default function App() {
         <header className="topline"><div>Douyin Analyst <span>/ 本地桌面</span></div><span>本机保存结果 · 模型服务接收字幕</span></header>
         {warning && <div className="warning" role="alert">{warning}</div>}
         {view === 'tasks' ? <>
-          <section className="hero"><div className="eyebrow">WORKSPACE / 001</div><h1>从视频出发，<br /><em>理解创作者的公开表达。</em></h1><p>粘贴抖音博主主页、视频链接或分享文本，创建可追溯的分析任务。</p></section>
+          <section className="hero"><h1>内容分析工作台</h1><p>导入视频或粘贴分享文本，查看字幕、观点与来源证据。</p></section>
+          <div className="task-workspace">
           <section className="create-panel"><div className="section-heading"><h2>新建分析</h2><span>每条结论都应追溯至原始视频</span></div>
             <label htmlFor="source">抖音链接 / 分享文本</label>
-            <textarea id="source" value={input} onChange={event => setInput(event.target.value)} placeholder="粘贴 https://www.douyin.com/user/... 或作品链接" rows={3} />
+            <textarea id="source" value={input} onChange={event => setInput(event.target.value)} placeholder="可直接粘贴抖音完整分享文本、主页或作品链接" rows={4} />
             <div className="create-controls"><div className="limit-group"><span>博主视频数量</span><button className={limit === 10 ? 'chip selected' : 'chip'} onClick={() => setLimit(10)}>最近10条</button><button className={limit === 30 ? 'chip selected' : 'chip'} onClick={() => setLimit(30)}>最近30条</button></div>
               <button className="primary" disabled={!ready || submitting || !input.trim()} onClick={() => void createTask()}>{submitting ? '正在创建…' : '创建任务'} <span aria-hidden="true">↗</span></button></div>
             <div className="actions"><button className="plain" disabled={!ready || submitting} onClick={() => void importVideo()}>选择本地视频分析</button><button className="plain" onClick={() => setView('settings')}>配置模型 API</button></div>
@@ -111,7 +118,7 @@ export default function App() {
           </section>
           <section className="history"><div className="section-heading"><h2>历史任务</h2><span>{tasks.length} 项</span></div>
             {tasks.length === 0 ? <div className="empty">暂无任务。先创建一个视频或博主分析任务。</div> : <div className="task-list">
-              {tasks.map(task => <article key={task.id} className={selected === task.id ? 'task-row expanded' : 'task-row'}>
+              {visibleTasks.map(task => <article key={task.id} className={selected === task.id ? 'task-row expanded' : 'task-row'}>
                 <button className="task-title" onClick={() => setSelected(selected === task.id ? null : task.id)}><span><strong>{task.source_kind === 'profile' ? '博主分析' : task.source_kind === 'video' ? '单视频分析' : task.source_kind === 'local' ? '本地视频分析' : '分享短链解析'}</strong><small>{formatted(task.created_at)} · {task.max_videos} 条上限</small></span><span className={`task-status status-${task.status}`}>{statusText[task.status]}</span></button>
                 {selected === task.id && <div className="task-detail">{task.source_kind === 'local' ? <span>{task.source_url}</span> : <a href={task.source_url} target="_blank" rel="noreferrer">{task.source_url}</a>}<p>阶段：{task.phase} · 成功 {task.success_count} / 失败 {task.failure_count} / 无有效语音 {task.no_speech_count}</p>
                   {task.error_message && <p className="reason"><b>{task.error_code}：</b>{task.error_message}</p>}
@@ -121,8 +128,10 @@ export default function App() {
                 </div>}
               </article>)}
             </div>}
-            {active && <p className="tip">已选任务：{active.id}</p>}
+            {pageCount > 1 && <div className="history-pagination"><button className="plain" disabled={page === 0} onClick={() => setHistoryPage(page - 1)}>上一页</button><span>{page + 1} / {pageCount}</span><button className="plain" disabled={page === pageCount - 1} onClick={() => setHistoryPage(page + 1)}>下一页</button></div>}
+            {active && <p className="tip">已选：{active.source_url}</p>}
           </section>
+          </div>
         </> : view === 'videos' ? <VideoLibrary ready={ready} targetEvidence={targetEvidence} /> : view === 'settings' ? <SettingsPage ready={ready} /> : <ReportPage ready={ready} tasks={tasks} onEvidence={(ref) => { setTargetEvidence(ref); setView('videos'); }} />}
       </main>
     </div>

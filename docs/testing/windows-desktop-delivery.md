@@ -1,5 +1,7 @@
 # Windows 桌面交付记录（2026-11-04）
 
+以下为 0.1.0 安装构建记录；后续版本见 [0.1.1 更新验证](windows-update-0.1.1.md)。
+
 ## 可运行位置
 
 - 已安装程序：`E:\1bishe\Douyin Analyst\douyin-analyst-desktop.exe`。

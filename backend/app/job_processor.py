@@ -137,7 +137,18 @@ class LiveTaskProcessor:
             )
         await control.checkpoint()
         self.change_phase(task_id, "resolve_creator")
-        creator_id, candidates, stop_reason = await self.resolve(task_snapshot)
+        try:
+            creator_id, candidates, stop_reason = await self.resolve(task_snapshot)
+        except Exception as exc:
+            status = getattr(exc, "status_code", None)
+            if status in (401, 403, 429):
+                raise PrerequisiteMissing(
+                    "DOUYIN_ACCESS_DENIED",
+                    f"链接已识别，但抖音采集组件的请求被平台拒绝（HTTP {status}）。"
+                    "请检查链接在抖音中是否可访问、本机网络及采集组件；如需登录，可在设置中提供自己的 Cookie 文件。"
+                    "处理后点击恢复重试，当前尚未取得可分析的视频。",
+                ) from exc
+            raise
         with self.factory.begin() as session:
             task = session.get(TaskRecord, task_id)
             task.platform_id = creator_id

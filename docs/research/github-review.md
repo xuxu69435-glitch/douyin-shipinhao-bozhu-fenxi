@@ -2,6 +2,12 @@
 
 Date: 2026-11-04. Research method: GitHub connector read of concrete source files, directory trees, issue #435, license files, repository HEADs; Douyin open platform and Tauri official docs. This is **source inspection**, not a claim that the remote projects were installed or executed locally.
 
+## Live share-link follow-up — 2026-11-06
+
+Both supplied public short links were resolved with real HTTP requests. Their redirects use `/share/user/` and `/share/video/`; these are now normalized to standard creator/video URLs. An independent anonymous F2 0.0.1.7 detail probe returned `APIResponseError` / HTTP 403. Redirect recognition is verified; creator details, pagination and media acquisition remain unverified. Results: [share-link probe](../testing/share-links-0.1.1.json).
+
+The upstream development branch's [request model](https://github.com/Johnserf-Seed/f2/blob/v0.0.1.8-pw3/f2/apps/douyin/model.py) now defers token initialization until model construction. This source check does not establish that the branch resolves the observed 403. The installed dependency remains 0.0.1.7; adopting a development snapshot still requires separate dependency and adapter compatibility verification.
+
 ## Windows follow-up — 2026-11-04
 
 The source review below is the earlier baseline. On the Windows machine, the declared F2 dependency resolved to PyPI **0.0.1.7**, installed into an isolated verification environment. `ClientConfManager.headers`, `SecUserIdFetcher.get_sec_user_id`, `AwemeIdFetcher.get_aweme_id`, and this project's collector options were checked successfully. Importing `f2.apps.douyin.crawler` also imports `model.py`, where `BaseRequestModel` calls `TokenManager.gen_real_msToken()` during class definition. That attempted a remote token request and failed with WinError 10013 under restricted networking. This is an SDK initialization/network finding, **not** a successful creator, pagination or media test. No token-generation fallback or access-control bypass was added.
