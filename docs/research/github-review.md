@@ -2,6 +2,12 @@
 
 Date: 2026-11-04. Research method: GitHub connector read of concrete source files, directory trees, issue #435, license files, repository HEADs; Douyin open platform and Tauri official docs. This is **source inspection**, not a claim that the remote projects were installed or executed locally.
 
+## Cookie import and transport follow-up — 2026-11-09
+
+F2 0.0.1.7 source confirms that its crawler forwards the supplied cookie, but its default HTTP transport uses verify=False and its logger creates files containing request URLs. The application now supplies a verified HTTPS client, enforces www.douyin.com on each request, stops on 401/403/429, and suppresses SDK logs. The private lazy-client injection is specific to pinned 0.0.1.7 and covered by origin/credential regression tests. No new upstream source was copied. Direct ID extraction avoids an unnecessary anonymous page fetch while author ownership still requires real data.
+
+The browser request-header procedure follows [Chrome DevTools Network documentation](https://developer.chrome.com/docs/devtools/network/reference/). Credentials are manually supplied, DPAPI encrypted, and excluded from reports. [F2 issue #443](https://github.com/Johnserf-Seed/f2/issues/443) contains gateway-change reports and suggestions; its arbitrary Argus-header workaround is not adopted. Anonymous access remains rejected; a logged-in-cookie test must be recorded separately.
+
 ## Live share-link follow-up — 2026-11-06
 
 2026-11-09 follow-up: both supplied short links were re-tested through the isolated probe. Resolution passed; profile works and video detail returned HTTP 403. Token initialization was separately observed to return HTTP 200, followed by a gateway rejection at the data endpoint. Upstream F2 commit remains `f6be8c0ffba9a127075bbeafe4838716650b6325`; its gateway-header changes were inspected but not adopted because a passing permission-respecting access test was not established. No access-control workaround was added. Results: [2026-11-09 live probe](../testing/share-links-2026-11-09.json).

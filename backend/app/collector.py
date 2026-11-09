@@ -6,13 +6,21 @@ proof that current Douyin endpoints are reachable from a given network/account.
 
 import asyncio
 from dataclasses import dataclass
+from contextlib import asynccontextmanager
+import logging
 from typing import Any
 
-from .links import ParsedLink
+from .links import parse_douyin_input
 
 
 class CollectorError(RuntimeError):
     pass
+
+
+class CollectorAccessDenied(CollectorError):
+    def __init__(self, status_code):
+        self.status_code = status_code
+        super().__init__(f"抖音接口返回 HTTP {status_code}，请检查登录状态及访问权限")
 
 
 @dataclass(frozen=True)
@@ -129,7 +137,15 @@ class F2Collector:
     """Thin optional SDK adapter. Provider registration stays disabled until live R0 acceptance."""
 
     def __init__(self, cookie: str | None = None):
-        self.cookie = cookie
+        from .douyin_session import normalize_cookie
+        self.cookie = normalize_cookie(cookie) if cookie else None
+        # The upstream default logger writes signed request URLs to ./logs.
+        # Keep SDK diagnostics out of logs; callers persist sanitized stage errors.
+        logger = logging.getLogger("f2")
+        if not logger.handlers:
+            logger.addHandler(logging.NullHandler())
+        logger.setLevel(logging.CRITICAL + 1)
+        logger.propagate = False
 
     def _options(self) -> dict:
         try:
@@ -137,19 +153,45 @@ class F2Collector:
         except ImportError as exc:
             raise CollectorError("F2未安装；请安装 backend[collector-f2]") from exc
         # Never auto-harvest browser cookies or print credentials.
-        return {"headers": ClientConfManager.headers(), "cookie": self.cookie or "", "timeout": 2}
+        return {"headers": dict(ClientConfManager.headers()), "cookie": self.cookie or "",
+                "timeout": 12, "max_retries": 1}
+
+    @asynccontextmanager
+    async def _crawler(self):
+        import httpx
+        from f2.apps.douyin.crawler import DouyinCrawler
+
+        async def request_guard(request):
+            if (request.url.scheme != "https" or request.url.host != "www.douyin.com"
+                    or request.url.port not in (None, 443)):
+                raise CollectorError("采集请求跳转至未允许的站点，已停止发送登录状态")
+
+        async def response_guard(response):
+            if response.status_code in (401, 403, 429):
+                raise CollectorAccessDenied(response.status_code)
+
+        async with DouyinCrawler(self._options()) as crawler:
+            # F2 0.0.1.7 defaults to verify=False in its transport. Supply a
+            # verified, origin-restricted client before the lazy SDK client opens.
+            crawler._aclient = httpx.AsyncClient(
+                headers=crawler.crawler_headers, timeout=httpx.Timeout(12, connect=5), verify=True,
+                follow_redirects=False, event_hooks={"request": [request_guard], "response": [response_guard]},
+            )
+            yield crawler
 
     async def profile_id(self, profile_url: str) -> str:
-        from f2.apps.douyin.utils import SecUserIdFetcher
-        return await SecUserIdFetcher.get_sec_user_id(profile_url)
+        link = parse_douyin_input(profile_url)
+        if link.kind != "profile" or not link.platform_id:
+            raise CollectorError("需要已解析的抖音主页地址")
+        return link.platform_id  # URL identity only; actual works must verify ownership.
 
     async def video_detail(self, video_url: str) -> VideoCandidate:
-        from f2.apps.douyin.utils import AwemeIdFetcher
-        from f2.apps.douyin.crawler import DouyinCrawler
+        link = parse_douyin_input(video_url)
+        if link.kind != "video" or not link.platform_id:
+            raise CollectorError("需要已解析的抖音作品地址")
         from f2.apps.douyin.model import PostDetail
-        aweme_id = await AwemeIdFetcher.get_aweme_id(video_url)
-        async with DouyinCrawler(self._options()) as crawler:
-            response = await crawler.fetch_post_detail(PostDetail(aweme_id=aweme_id))
+        async with self._crawler() as crawler:
+            response = await crawler.fetch_post_detail(PostDetail(aweme_id=link.platform_id))
         raw = response.get("aweme_detail") if isinstance(response, dict) else None
         if not isinstance(raw, dict):
             raise CollectorError("作品详情不可用，可能需要授权或作品不可访问")
@@ -162,7 +204,6 @@ class F2Collector:
         return page.videos[0]
 
     async def author_works(self, author_id: str, max_videos: int) -> AuthorWorks:
-        from f2.apps.douyin.crawler import DouyinCrawler
         from f2.apps.douyin.model import UserPost
 
         pages_started = 0
@@ -172,7 +213,7 @@ class F2Collector:
             if pages_started > 0:
                 await asyncio.sleep(2)  # conservative page pacing
             pages_started += 1
-            async with DouyinCrawler(self._options()) as crawler:
+            async with self._crawler() as crawler:
                 return await crawler.fetch_user_post(UserPost(sec_user_id=sec_id, max_cursor=cursor, count=count))
 
         return await collect_author_pages(fetch_page, author_id, max_videos)

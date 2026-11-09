@@ -22,7 +22,8 @@ def test_access_denial_keeps_short_resolution_without_claiming_author(tmp_path, 
             error = RuntimeError("fixture-sensitive-cookie-and-url")
             error.status_code = 403
             raise error
-    result = asyncio.run(probe("分享 https://v.douyin.com/NE2hkgBNwHM/", True, "", tmp_path, collector=Denied()))
+    result = asyncio.run(probe("分享 https://v.douyin.com/NE2hkgBNwHM/", True, "", tmp_path,
+                               collector=Denied(), cookie="sessionid=fixture-private-cookie"))
     assert result["resolved_url"] == VIDEO
     assert result["steps"][0]["status"] == "passed"
     assert result["steps"][1]["status"] == "blocked"
@@ -30,6 +31,8 @@ def test_access_denial_keeps_short_resolution_without_claiming_author(tmp_path, 
     assert not result["complete"] and not result["model_called"]
     assert "fixture-sensitive" not in json.dumps(result)
     assert "author_id" not in result
+    assert result["access_mode"] == "user_imported_cookie"
+    assert "fixture-private-cookie" not in json.dumps(result)
 
 
 def test_profile_id_in_url_does_not_verify_author_or_second_page(tmp_path):
@@ -63,7 +66,7 @@ def test_probe_api_does_not_decrypt_api_key(client, auth, monkeypatch):
     def forbidden(*args, **kwargs):
         raise AssertionError("collection must not decrypt model credentials")
     monkeypatch.setattr(runtime_settings, "_crypt_key", forbidden)
-    monkeypatch.setattr(collection_probe, "run_isolated_probe", lambda *args: {"model_called": False})
+    monkeypatch.setattr(collection_probe, "run_isolated_probe", lambda *args, **kwargs: {"model_called": False})
     assert client.post("/api/diagnostics/douyin", json={"input_text": VIDEO}).status_code == 401
     assert client.post("/api/diagnostics/douyin", headers=auth, json={"input_text": VIDEO}).json() == {"model_called": False}
     assert "model_called" in client.get("/api/diagnostics/douyin/export", headers=auth).json()["content"]

@@ -26,5 +26,7 @@ model-settings.json
 model-settings.tmp
 chatgpt-auth.json
 chatgpt-host.json
+douyin-session.json
+douyin-session.tmp
 frontend/src-tauri/gen/
 logs/

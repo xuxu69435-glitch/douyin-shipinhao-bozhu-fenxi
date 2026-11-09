@@ -9,7 +9,7 @@ Windows 本地桌面应用：Tauri 2 + React + Python 3.12 / FastAPI + SQLite，
 安装程序生成于：
 
 ```text
-frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.2_x64-setup.exe
+frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.3_x64-setup.exe
 ```
 
 启动应用，打开左侧 **模型与采集设置**：
@@ -17,9 +17,11 @@ frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.2_x64-setup.exe
 1. 选择“使用 ChatGPT 套餐”，完成官方浏览器登录授权并选择可用模型；或选择 API Key 并填写 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL。点击“保存并测试所选模型”。
 2. 填写 Whisper 模型名（默认 small）或已有本地模型目录。首次使用模型名需下载权重，语音识别在本机运行。
 3. 在任务中心点击“选择本地视频分析”，先独立测试字幕、摘要及证据。
-4. 需要测试抖音时，展开“抖音采集设置”并开启真实采集开关，按需提供自己有权使用的 Cookie 文件路径。支持作品、主页和分享文本，博主上限 10/30 条。
+4. 需要测试抖音时，展开“抖音采集设置”并开启真实采集开关，按 [Cookie 说明](docs/douyin-cookie.md) 在本机粘贴并加密保存登录状态，也兼容单行 Cookie 文件路径。支持作品、主页和分享文本，博主上限 10/30 条。
 
 API Key 模式须兼容 Chat Completions、JSON mode 和 max_tokens；ChatGPT 套餐模式使用官方 Responses 授权通道。连接测试会产生少量所选服务用量，不采集视频。API 密钥保存在本机数据目录，Windows 使用当前用户 DPAPI 加密，页面不回显，配置不进入 Git。分析字幕会发送给所配置的模型服务。
+
+分发及空配置检查见 [独立复现说明](docs/reproducibility.md)。
 
 详见 [API 接入与真实测试](docs/api-setup.md)、[实际进度](docs/progress.md)、[Harness 取舍](docs/research/harness-decision.md)。
 

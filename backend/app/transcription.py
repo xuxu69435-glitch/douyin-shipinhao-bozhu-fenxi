@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Protocol
 from importlib.metadata import version, PackageNotFoundError
 
+# Public model revision used in the Windows real-speech acceptance test.
+SMALL_MODEL_REVISION = "536b0662742c02347bc0e980a01041f333bce120"
+
 
 @dataclass(frozen=True)
 class AsrSegment:
@@ -55,6 +58,7 @@ class FasterWhisperTranscriber:
         self.model_name = model_name
         self.device = device
         self.compute_type = compute_type
+        self.revision = SMALL_MODEL_REVISION if model_name == "small" else None
         self._model = None
 
     @property
@@ -63,7 +67,8 @@ class FasterWhisperTranscriber:
             engine_version = version("faster-whisper")
         except PackageNotFoundError:
             engine_version = "not-installed"
-        return f"faster-whisper/{engine_version}:{self.model_name}:{self.device}:{self.compute_type}:vad1:beam5"
+        model_identity = self.model_name + ("@" + self.revision if self.revision else "")
+        return f"faster-whisper/{engine_version}:{model_identity}:{self.device}:{self.compute_type}:vad1:beam5"
 
     def transcribe(self, audio_path: Path) -> AsrResult:
         if not audio_path.is_file():
@@ -73,7 +78,8 @@ class FasterWhisperTranscriber:
                 from faster_whisper import WhisperModel
             except ImportError as exc:
                 raise RuntimeError("faster-whisper未安装；请安装 backend[asr]") from exc
-            self._model = WhisperModel(self.model_name, device=self.device, compute_type=self.compute_type)
+            self._model = WhisperModel(self.model_name, device=self.device, compute_type=self.compute_type,
+                                       revision=self.revision, use_auth_token=False)
         items, info = self._model.transcribe(
             str(audio_path), vad_filter=True, beam_size=5, condition_on_previous_text=False,
         )

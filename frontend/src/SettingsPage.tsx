@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiRequest, type RuntimeSettingsView, type Diagnostics } from './api';
 import ChatGPTConnection from './ChatGPTConnection';
+import DouyinSession from './DouyinSession';
 
 export default function SettingsPage({ ready }: { ready: boolean }) {
   const [settings, setSettings] = useState<RuntimeSettingsView | null>(null);
@@ -74,11 +75,14 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
         <details className="collector-settings"><summary>抖音采集设置 <span>{settings.enable_live ? '已启用' : '未启用'}</span></summary>
         <label className="checkbox"><input type="checkbox" checked={settings.enable_live} onChange={event => setSettings({ ...settings, enable_live: event.target.checked })}/>启用真实抖音采集</label>
         <p className="muted">默认关闭。仅在你确认有权访问样本并准备进行真实测试后开启；本地视频分析不需要开启此项。</p>
+        <DouyinSession/>
+        <details className="cookie-help"><summary>已有 Cookie 文本文件？</summary>
         <label>抖音 Cookie 文件路径（可选）
           <input value={settings.cookie_file} placeholder="留空，或填写你自行提供的本机文本文件路径"
             onChange={event => setSettings({ ...settings, cookie_file: event.target.value })}/>
-          <span>不会从浏览器提取登录状态。文件只在本机读取。</span>
+          <span>UTF-8 单行 Cookie 请求头；已加密导入的状态优先。不会从浏览器自动提取登录状态。</span>
         </label>
+        </details>
         </details>
         <div className="actions"><button className="primary" disabled={busy} onClick={() => void save()}>保存配置</button>
           <button className="plain" disabled={busy} onClick={() => void save(true)}>{busy ? '正在处理…' : '保存并测试所选模型'}</button></div>

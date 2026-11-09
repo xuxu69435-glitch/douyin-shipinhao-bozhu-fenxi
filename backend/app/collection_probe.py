@@ -27,7 +27,7 @@ def new_report():
                       for key in ("link", "author", "works", "page2", "media")]}
 
 
-async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda report: None, collector=None):
+async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda report: None, collector=None, cookie=None):
     report = new_report()
 
     def step(name, status, message):
@@ -48,8 +48,11 @@ async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda
         active = "author"
         if collector is None:
             from .collector import F2Collector
-            cookie = Path(cookie_file).read_text(encoding="utf8").strip() if cookie_file else None
+            if cookie is None and cookie_file:
+                from .douyin_session import read_cookie_file
+                cookie = read_cookie_file(cookie_file)
             collector = F2Collector(cookie)
+        report["access_mode"] = "user_imported_cookie" if cookie else "anonymous"
         if link.kind == "profile":
             author_id = await collector.profile_id(link.url)
             active = "works"
@@ -100,7 +103,7 @@ async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda
     return report
 
 
-def run_isolated_probe(text, allow_collection, cookie_file, scratch_dir, timeout=45):
+def run_isolated_probe(text, allow_collection, cookie_file, scratch_dir, timeout=45, *, cookie=None):
     command = ([sys.executable, "--collection-probe"] if getattr(sys, "frozen", False) else
                [sys.executable, str(Path(__file__).resolve().parents[1] / "sidecar.py"), "--collection-probe"])
     # Never pass model credentials into the probe, even through inherited environment.
@@ -127,7 +130,7 @@ def run_isolated_probe(text, allow_collection, cookie_file, scratch_dir, timeout
     finished = False
     try:
         process.stdin.write(json.dumps({"text": text, "allow_collection": allow_collection,
-            "cookie_file": cookie_file, "scratch_dir": str(scratch_dir)}, ensure_ascii=True).encode("utf8"))
+            "cookie_file": cookie_file, "cookie": cookie, "scratch_dir": str(scratch_dir)}, ensure_ascii=True).encode("utf8"))
         process.stdin.close()
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -165,4 +168,4 @@ def probe_main():
     def publish(report):
         print(json.dumps(report, ensure_ascii=True), flush=True)
     asyncio.run(probe(payload["text"], payload["allow_collection"], payload["cookie_file"],
-                      Path(payload["scratch_dir"]), publish))
+                      Path(payload["scratch_dir"]), publish, cookie=payload.get("cookie")))

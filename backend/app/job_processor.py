@@ -229,8 +229,8 @@ def build_opt_in_live_processor(factory: sessionmaker[Session], data_dir: Path, 
         raise RuntimeError("Live collector was not explicitly enabled")
     from .chatgpt_plan import make_generator
     generator = make_generator(configuration, data_dir)
-    cookie_file = configuration.cookie_file
-    cookie = Path(cookie_file).read_text(encoding="utf8").strip() if cookie_file else None
+    from .douyin_session import load_cookie
+    cookie = load_cookie(data_dir, configuration.cookie_file)
     return LiveTaskProcessor(
         factory, data_dir, F2Collector(cookie), FasterWhisperTranscriber(configuration.whisper_model),
         generator,

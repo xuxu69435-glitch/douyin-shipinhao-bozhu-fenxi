@@ -5,6 +5,9 @@ import sys
 
 
 def main():
+    if "--self-check" in sys.argv:
+        from app.self_check import self_check_main
+        return self_check_main()
     if "--collection-probe" in sys.argv:
         from app.collection_probe import probe_main
         return probe_main()
@@ -22,4 +25,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
