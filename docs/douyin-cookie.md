@@ -6,11 +6,13 @@
 
 1. 用 Edge 或 Chrome 打开 [抖音网页版](https://www.douyin.com/)，登录自己的账号。打开目标博主主页或作品，先确认浏览器能正常显示、播放。
 2. 按 **F12** 打开开发者工具，切换至 **Network / 网络**。保持开发者工具打开，刷新抖音页面；若没有作品请求，可播放作品或向下滚动主页。
-3. 选择 **Fetch/XHR**，筛选 `aweme`，找到发往 `www.douyin.com` 的作品请求，例如路径含 `aweme/post` 或 `aweme/detail`。不要选视频 CDN、图片或广告请求。
+3. 选择 **Fetch/XHR**，点击作品请求，例如 `feed`，或筛选 `aweme` / `post`。**Name 列通常只显示请求名称，不会直接显示域名**；点击后在 **Headers / 标头 → General / 常规 → Request URL / 请求网址** 中，确认地址以 `https://www.douyin.com/` 开头。不要选视频 CDN、图片或广告请求。
 4. 点击该请求 → **Headers / 标头** → **Request Headers / 请求标头**，找到 **Cookie**。
 5. 复制 Cookie 的**值**。正确内容通常是 `名称=值; 名称2=值2` 这样的单行文本。不要复制 Response Headers 中的 `Set-Cookie`，不要复制整段 cURL、JSON 或全部请求标头。软件也接受以 `Cookie:` 开头的单行文本。
 
 如果看不到 Cookie，先确认所选请求属于 `www.douyin.com` 且是在登录后刷新产生的。不要从其他网站取登录状态，也不要用 `document.cookie` 代替完整请求头；它可能缺少 HttpOnly 登录字段。
+
+遇到“HTTP 422”表示本机导入内容未通过校验，并非抖音返回的登录失败。请复制 **Request Headers** 中 Cookie 行的完整值，避免从 **Cookies** 表格逐格复制。软件保留单行值中的引号、JSON 内容、等号和同名 Cookie；错误提示只指出出错的项数，不显示凭据。修复前的 0.1.3 构建可能误拒绝 JSON 内容或丢失后续字段，需更新安装程序后重新导入。
 
 ## 导入软件
 

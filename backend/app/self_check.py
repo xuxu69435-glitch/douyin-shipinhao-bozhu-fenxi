@@ -2,7 +2,6 @@
 
 import importlib.metadata
 import json
-import os
 from pathlib import Path
 import platform
 import subprocess
@@ -25,7 +24,10 @@ def run_self_check():
             report["checks"].append({"name": name, "status": "passed", "details": details})
         except Exception as exc:
             # Exceptions can include machine paths; diagnostics are safe to share.
-            report["checks"].append({"name": name, "status": "failed", "error_type": type(exc).__name__})
+            details = {"name": name, "status": "failed", "error_type": type(exc).__name__}
+            if isinstance(exc, importlib.metadata.PackageNotFoundError):
+                details["distribution"] = exc.name
+            report["checks"].append(details)
 
     with tempfile.TemporaryDirectory(prefix="douyin-analyst-check-") as temporary:
         root = Path(temporary)

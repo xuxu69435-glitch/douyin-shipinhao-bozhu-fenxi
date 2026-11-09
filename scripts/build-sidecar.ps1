@@ -34,6 +34,9 @@ try {
         '--hidden-import','onnxruntime.capi.onnxruntime_pybind11_state',
         '--hidden-import','f2.apps.douyin.crawler','--copy-metadata','f2',
         '--copy-metadata','faster-whisper','--copy-metadata','uvicorn')
+    foreach ($distribution in @('fastapi','SQLAlchemy','av','ctranslate2','onnxruntime')) {
+        $arguments += @('--copy-metadata', $distribution)
+    }
     if ($BundleMediaTools) {
         foreach ($tool in @('ffmpeg','ffprobe')) {
             $executable = (Get-Command $tool -ErrorAction Stop).Source

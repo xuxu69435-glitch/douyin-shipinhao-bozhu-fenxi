@@ -75,6 +75,13 @@ def run():
             base = f"http://127.0.0.1:{port}/api"
             assert httpx.get(f"{base}/tasks", timeout=3).status_code == 401
             headers = {"X-Analyst-Token": token}
+            fixture_cookie = 'prefs={"volume":0.5}; theme=dark; theme=light; sessionid=fixture-cookie-secret'
+            session = httpx.post(f"{base}/douyin/session", headers=headers,
+                                 json={"cookie": fixture_cookie}, timeout=5)
+            assert session.status_code == 200 and session.json()["cookie_count"] == 4, session.status_code
+            assert session.json()["login_marker_present"]
+            assert "fixture-cookie-secret" not in session.text
+            assert "fixture-cookie-secret" not in (Path(data_dir) / "douyin-session.json").read_text()
             configuration = {"OPENAI_BASE_URL": "https://example.invalid/v1", "OPENAI_MODEL": "fixture-model",
                              "OPENAI_API_KEY": "fixture-desktop-settings-key", "enable_live": False}
             settings = httpx.post(f"{base}/settings", headers=headers, json=configuration, timeout=5)
@@ -126,6 +133,11 @@ def run():
             assert saved.status_code == 200 and saved.json()["id"] == task_id
             settings = httpx.get(f"{base}/settings", headers=headers, timeout=3)
             assert settings.json()["api_key_configured"] and settings.json()["OPENAI_MODEL"] == "fixture-model"
+            session = httpx.get(f"{base}/douyin/session", headers=headers, timeout=3)
+            assert session.json()["configured"] and session.json()["cookie_count"] == 4
+            assert "fixture-cookie-secret" not in session.text
+            cleared = httpx.post(f"{base}/douyin/session/clear", headers=headers, timeout=3)
+            assert cleared.status_code == 200 and not cleared.json()["configured"]
         finally:
             stop_process(restarted, port, token)
         return {
@@ -145,6 +157,7 @@ def run():
             "chatgpt_bridge_disconnected_state": "passed",
             "chatgpt_no_account_blocks_without_api_fallback": True,
             "isolated_collection_probe_without_llm": "passed",
+            "synthetic_cookie_import_encryption_restart_clear": "passed",
         }
 
 

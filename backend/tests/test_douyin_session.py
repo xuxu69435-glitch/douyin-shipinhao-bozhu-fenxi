@@ -3,16 +3,34 @@ import os
 
 import pytest
 
-from app.douyin_session import normalize_cookie, load_cookie, save_session, session_status, DouyinSessionError
+from app.douyin_session import normalize_cookie, cookie_metadata, load_cookie, save_session, session_status, DouyinSessionError
 
 
 def test_header_value_bom_and_equals_are_preserved():
     assert normalize_cookie('\ufeff Cookie: sessionid=fixture-only; token=abc== ') == 'sessionid=fixture-only; token=abc=='
 
 
+@pytest.mark.parametrize('text', [
+    'preferences={"volume":0.5}; sessionid=fixture-only',
+    'sessionid=fixture-only; preferences={"volume":0.5}; token=abc==',
+    'theme=dark; theme=light; sessionid=fixture-only',
+    'empty=; prefs="a,b"; opaque=a/b+c==',
+])
+def test_browser_header_values_and_duplicate_names_are_preserved(text):
+    assert normalize_cookie(text) == text
+
+
+def test_metadata_handles_opaque_values_without_losing_login_marker():
+    assert cookie_metadata('prefs={"volume":0.5}; theme=dark; theme=light; sessionid=fixture') == {
+        'cookie_count': 4, 'login_marker_present': True,
+    }
+
+
 @pytest.mark.parametrize('text', ['', 'fixture-without-equals', 'sessionid=fixture\r\nX-Header: injected',
-                                  '{"sessionid":"fixture"}', 'sessionid=中文', 'name=' + 'x' * 65536],
-                         ids=['empty', 'missing-equals', 'injected-header', 'json', 'unicode', 'oversized'])
+                                  '{"sessionid":"fixture"}', 'sessionid=中文', 'name=' + 'x' * 65536,
+                                  'sessionid=fixture; HttpOnly', 'bad name=fixture'],
+                         ids=['empty', 'missing-equals', 'injected-header', 'json', 'unicode', 'oversized',
+                              'response-attribute', 'invalid-name'])
 def test_invalid_cookie_never_echoes_credential(text):
     with pytest.raises(DouyinSessionError) as exc:
         normalize_cookie(text)
@@ -51,9 +69,12 @@ def test_import_api_rejects_without_leaking_body(client, auth):
 
 
 @pytest.mark.skipif(os.name != 'nt', reason='Windows DPAPI')
-def test_import_save_read_and_clear_do_not_reveal_cookie(client, auth):
-    response = client.post('/api/douyin/session', headers=auth, json={'cookie':'sessionid=fixture-private'})
+def test_import_save_read_and_clear_do_not_reveal_cookie(client, auth, tmp_path):
+    cookie = 'prefs={"volume":0.5}; theme=dark; theme=light; sessionid=fixture-private'
+    response = client.post('/api/douyin/session', headers=auth, json={'cookie': cookie})
     assert response.status_code == 200 and response.json()['configured']
+    assert response.json()['cookie_count'] == 4 and response.json()['login_marker_present']
+    assert load_cookie(tmp_path) == cookie
     assert 'fixture-private' not in response.text
     assert 'fixture-private' not in client.get('/api/douyin/session', headers=auth).text
     assert client.post('/api/douyin/session/clear', headers=auth).json()['configured'] is False

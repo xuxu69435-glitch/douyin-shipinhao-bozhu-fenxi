@@ -34,7 +34,7 @@ export default function DouyinSession() {
       <ol>
         <li>在自己的浏览器打开抖音网页版并登录，确认能正常观看要分析的视频。</li>
         <li>按 F12 打开开发者工具，选择 Network（网络），再刷新抖音页面。</li>
-        <li>选择发往 www.douyin.com 的作品请求（可筛选 aweme 或 post），打开 Headers（标头）。</li>
+        <li>点击作品请求（如 feed、aweme 或 post），打开 Headers（标头）。Name 列可能不显示域名，请在 General（常规）的 Request URL（请求网址）确认以 https://www.douyin.com/ 开头。</li>
         <li>在 Request Headers（请求标头）中找到 Cookie，复制它的值。不要复制 Set-Cookie、整段 cURL 或响应内容。</li>
         <li>粘贴到上方，点击“加密保存登录状态”；启用并保存真实采集后，在任务中心检测原链接。</li>
       </ol>

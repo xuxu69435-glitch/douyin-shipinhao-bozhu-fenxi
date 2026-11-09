@@ -2,15 +2,16 @@
 
 import base64
 import datetime as dt
-from http.cookies import SimpleCookie, CookieError
 import json
 import os
 from pathlib import Path
+import re
 
 from .runtime_settings import _crypt_key
 
 MAX_COOKIE_BYTES = 65_536
 SESSION_FILENAME = "douyin-session.json"
+COOKIE_NAME = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
 
 
 class DouyinSessionError(ValueError):
@@ -29,21 +30,28 @@ def normalize_cookie(text: str) -> str:
         raise DouyinSessionError("请复制单行 Cookie 请求头的值，不要包含换行或其他请求头")
     if text.startswith(("{", "[", "curl ", "#")):
         raise DouyinSessionError("请粘贴 Cookie 请求头的值，不要粘贴 JSON、导出表格或整段 cURL")
-    parsed = SimpleCookie()
-    try:
-        parsed.load(text)
-    except CookieError:
-        raise DouyinSessionError("Cookie 格式无法识别，请重新复制 Cookie 请求头的值") from None
-    if not parsed or any(part.strip() and "=" not in part for part in text.split(";")):
+    parts = []
+    # Forward the browser's request header without interpreting opaque values.
+    # SimpleCookie can silently drop JSON-like values and duplicate-name entries.
+    for index, part in enumerate(text.split(";"), 1):
+        part = part.strip()
+        if not part:
+            continue
+        name, separator, _ = part.partition("=")
+        if not separator or not COOKIE_NAME.fullmatch(name):
+            raise DouyinSessionError(
+                f"Cookie 第 {index} 项缺少有效的名称=值；请复制 Request Headers 中 Cookie 的完整值，"
+                "不要复制 Cookies 表格或 Set-Cookie")
+        parts.append(part)
+    if not parts:
         raise DouyinSessionError("Cookie 应为 name=value; name2=value2 格式")
-    return "; ".join(f"{key}={value.coded_value}" for key, value in parsed.items())
+    return "; ".join(parts)
 
 
 def cookie_metadata(cookie: str):
-    parsed = SimpleCookie()
-    parsed.load(cookie)
-    return {"cookie_count": len(parsed),
-            "login_marker_present": any(name in parsed for name in ("sessionid", "sessionid_ss", "sid_tt"))}
+    names = [part.partition("=")[0] for part in normalize_cookie(cookie).split("; ")]
+    return {"cookie_count": len(names),
+            "login_marker_present": any(name in names for name in ("sessionid", "sessionid_ss", "sid_tt"))}
 
 
 def session_status(data_dir: Path):
