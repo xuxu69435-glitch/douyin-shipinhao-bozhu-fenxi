@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "douyin-analyst-backend"
-version = "0.1.1"
+version = "0.1.2"
 description = "Local evidence-oriented Douyin creator analysis backend"
 requires-python = ">=3.12,<3.14"
 dependencies = [
@@ -18,7 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2"]
 collector-f2 = ["f2==0.0.1.7"]
-asr = ["faster-whisper>=1.1,<2"]
+asr = ["faster-whisper==1.2.1", "av>=11,<19"]
 packaging = ["pyinstaller>=6.11,<7"]
 
 [tool.setuptools]

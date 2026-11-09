@@ -71,7 +71,7 @@ async def analyze_media(
         raise ValueError("Transcriber.model_version and generator.model must be explicit for caching")
     transcript_version = version_key("asr", media_hash, asr_model, "pipeline-m1-v1", provenance)
     model_identity = getattr(generator, "cache_identity", llm_model)
-    analysis_version = version_key("llm", transcript_version, model_identity, "prompt-m1-v2", provenance)
+    analysis_version = version_key("llm", transcript_version, model_identity, "prompt-m1-v3", provenance)
 
     with factory.begin() as session:
         video = session.scalar(select(VideoRecord).where(

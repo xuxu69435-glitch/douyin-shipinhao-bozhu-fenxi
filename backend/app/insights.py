@@ -5,7 +5,7 @@ import asyncio
 from typing import Any, Literal, Protocol
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 
 from .schemas import EvidenceRef
 
@@ -30,6 +30,12 @@ class InsightDraft(BaseModel):
     key_claims: list[EvidenceStatementDraft] = Field(max_length=20)
     explicitly_stated_preferences: list[EvidenceStatementDraft] = Field(max_length=20)
     discussed_entities: list[EvidenceStatementDraft] = Field(default_factory=list, max_length=20)
+
+    @field_validator("primary_domain", mode="before")
+    @classmethod
+    def unknown_domain(cls, value):
+        # Insufficient evidence is a valid outcome, never invent a domain to fill a tag.
+        return "未分类" if isinstance(value, str) and not value.strip() else value
 
     @model_validator(mode="after")
     def nonblank_tags(self):
@@ -125,6 +131,7 @@ speaker_role只能是creator,narrator,guest,quoted,unknown之一；身份未知�
 只摘取有明确字幕证据的观点与偏好，不能把旁白、嘉宾、引用者的表述直接当成博主喜好。
 每条陈述都必须有真实segment_id。discussed_entities只列出明确讨论的人物/品牌/产品等对象，不能推断没有出现的对象。不要填写video_id、时间戳、来源网址等字段。
 无法确定的内容宁可不填写；主营业务仅凭字幕无法证实则不要断言。
+primary_domain 必须是非空字符串，领域证据不足时统一填写“未分类”，不要猜测领域。
 """
 
 

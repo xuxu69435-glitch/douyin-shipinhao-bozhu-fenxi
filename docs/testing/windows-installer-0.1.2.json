@@ -1,0 +1,10 @@
+{
+  "version": "0.1.2",
+  "size_bytes": 302059405,
+  "sha256": "74d4c5722dd2dcd91a058cdba365c3d1c7d7a1e8905ae24c87658b5f02c0dbf5",
+  "silent_install_exit_code": 0,
+  "previous_tasks_preserved": true,
+  "settings_preserved": true,
+  "chatgpt_authorization_preserved": true,
+  "installed_backend_matches_build": true
+}

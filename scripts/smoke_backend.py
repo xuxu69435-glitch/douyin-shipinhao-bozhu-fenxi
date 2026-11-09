@@ -105,6 +105,17 @@ def run():
                     break
                 time.sleep(.05)
             assert task["status"] == "blocked" and task["error_code"] == "R0_LIVE_COLLECTION_NOT_VERIFIED", task
+            plan = {**configuration, "OPENAI_API_KEY": None, "model_provider": "chatgpt", "CHATGPT_MODEL": "fixture-model"}
+            assert httpx.post(f"{base}/settings", headers=headers, json=plan, timeout=5).status_code == 200
+            state = httpx.get(f"{base}/chatgpt/status", headers=headers, timeout=15).json()
+            assert state == {"status": "disconnected", "sharing": False}, state
+            # No account means no remote request. This verifies the bundled Node runtime.
+            models = httpx.get(f"{base}/chatgpt/models", headers=headers, timeout=15)
+            assert models.status_code == 502 and "sign_in_required" in models.text, models.text
+            check = httpx.post(f"{base}/diagnostics/douyin", headers=headers,
+                               json={"input_text": VIDEO}, timeout=50)
+            assert check.status_code == 200 and check.json()["steps"][0]["status"] == "passed", check.text
+            assert not check.json()["model_called"] and not check.json()["complete"]
         finally:
             stop_process(process, port, token)
         assert process.poll() is not None
@@ -131,6 +142,9 @@ def run():
             "real_asr_llm_tested": False,
             "tauri_process_lifecycle_tested": False,
             "douyin_live_tested": False,
+            "chatgpt_bridge_disconnected_state": "passed",
+            "chatgpt_no_account_blocks_without_api_fallback": True,
+            "isolated_collection_probe_without_llm": "passed",
         }
 
 

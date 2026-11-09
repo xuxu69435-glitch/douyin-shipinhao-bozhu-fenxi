@@ -23,8 +23,10 @@ try {
     if (-not $hostLine) { throw 'Rust target triple unavailable from rustc -Vv.' }
     $hostTriple = ($hostLine -replace '^host:\s*', '').Trim()
     $env:PYINSTALLER_CONFIG_DIR = Join-Path (Split-Path -Parent $projectRoot) '.task-cache\pyinstaller'
+    & (Join-Path $PSScriptRoot 'build-chatgpt-bridge.ps1')
     $arguments = @('-m','PyInstaller','--noconfirm','--onedir','--clean',
         '--name','douyin-analyst-backend','--paths','backend',
+        '--add-data',"$(Join-Path $projectRoot 'auth-helper\dist\runtime');chatgpt-bridge",
         '--distpath','backend\dist','--workpath','backend\build',
         '--collect-all','f2','--collect-all','faster_whisper',
         '--collect-all','ctranslate2','--collect-all','tokenizers',
@@ -46,6 +48,15 @@ try {
     New-Item -ItemType Directory -Force $runtime | Out-Null
     $dest = Join-Path $binaries "douyin-analyst-backend-$hostTriple.exe"
     Copy-Item backend\dist\douyin-analyst-backend\douyin-analyst-backend.exe $dest -Force
+    # Replace generated resources so dependency upgrades cannot leave stale modules/DLLs.
+    $expectedBinaries = [IO.Path]::GetFullPath((Join-Path $projectRoot 'frontend\src-tauri\binaries'))
+    foreach ($relative in @('runtime\_internal', '_internal')) {
+        $generated = [IO.Path]::GetFullPath((Join-Path $binaries $relative))
+        if (-not $generated.StartsWith($expectedBinaries + '\', [StringComparison]::OrdinalIgnoreCase)) {
+            throw 'Generated runtime path escaped the build directory.'
+        }
+        if (Test-Path -LiteralPath $generated) { Remove-Item -LiteralPath $generated -Recurse -Force }
+    }
     # The installer puts _internal next to the external executable. Keep an
     # identical layout here so tauri dev can launch the same sidecar.
     Copy-Item backend\dist\douyin-analyst-backend\_internal $runtime -Recurse -Force

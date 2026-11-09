@@ -4,9 +4,17 @@ Date: 2026-11-04. Research method: GitHub connector read of concrete source file
 
 ## Live share-link follow-up — 2026-11-06
 
+2026-11-09 follow-up: both supplied short links were re-tested through the isolated probe. Resolution passed; profile works and video detail returned HTTP 403. Token initialization was separately observed to return HTTP 200, followed by a gateway rejection at the data endpoint. Upstream F2 commit remains `f6be8c0ffba9a127075bbeafe4838716650b6325`; its gateway-header changes were inspected but not adopted because a passing permission-respecting access test was not established. No access-control workaround was added. Results: [2026-11-09 live probe](../testing/share-links-2026-11-09.json).
+
+Official model-plan integration is separately documented in [ChatGPT plan research](chatgpt-plan.md), including the adopted commit, license, files, dependencies and tests.
+
 Both supplied public short links were resolved with real HTTP requests. Their redirects use `/share/user/` and `/share/video/`; these are now normalized to standard creator/video URLs. An independent anonymous F2 0.0.1.7 detail probe returned `APIResponseError` / HTTP 403. Redirect recognition is verified; creator details, pagination and media acquisition remain unverified. Results: [share-link probe](../testing/share-links-0.1.1.json).
 
 The upstream development branch's [request model](https://github.com/Johnserf-Seed/f2/blob/v0.0.1.8-pw3/f2/apps/douyin/model.py) now defers token initialization until model construction. This source check does not establish that the branch resolves the observed 403. The installed dependency remains 0.0.1.7; adopting a development snapshot still requires separate dependency and adapter compatibility verification.
+
+## ASR compatibility follow-up — 2026-11-09
+
+Real speech decoding reproduced faster-whisper 1.2.1 with PyAV 19.0.2 failing on `metadata_errors`. Upstream [issue #1589](https://github.com/SYSTRAN/faster-whisper/issues/1589) confirms PyAV 19 removed the argument. This project keeps the release SDK and constrains `av<19`; Windows lock resolves 18.1.0. Real PCM decoding and the small model at Hugging Face commit `536b0662742c02347bc0e980a01041f333bce120` passed on CPU int8. The input is locally synthesized speech, not Douyin media. See [ASR + plan test](../testing/real-asr-0.1.2.json). Model weights remain local cache resources outside the source repository.
 
 ## Windows follow-up — 2026-11-04
 

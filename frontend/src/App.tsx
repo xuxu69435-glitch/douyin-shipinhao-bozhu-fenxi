@@ -3,6 +3,7 @@ import { apiRequest, connectBackend, selectLocalVideo, type Evidence, type TaskS
 import VideoLibrary from './VideoLibrary';
 import ReportPage from './ReportPage';
 import SettingsPage from './SettingsPage';
+import CollectionCheck from './CollectionCheck';
 
 type View = 'tasks' | 'videos' | 'reports' | 'settings';
 
@@ -113,8 +114,9 @@ export default function App() {
             <textarea id="source" value={input} onChange={event => setInput(event.target.value)} placeholder="可直接粘贴抖音完整分享文本、主页或作品链接" rows={4} />
             <div className="create-controls"><div className="limit-group"><span>博主视频数量</span><button className={limit === 10 ? 'chip selected' : 'chip'} onClick={() => setLimit(10)}>最近10条</button><button className={limit === 30 ? 'chip selected' : 'chip'} onClick={() => setLimit(30)}>最近30条</button></div>
               <button className="primary" disabled={!ready || submitting || !input.trim()} onClick={() => void createTask()}>{submitting ? '正在创建…' : '创建任务'} <span aria-hidden="true">↗</span></button></div>
-            <div className="actions"><button className="plain" disabled={!ready || submitting} onClick={() => void importVideo()}>选择本地视频分析</button><button className="plain" onClick={() => setView('settings')}>配置模型 API</button></div>
-            <p className="disclaimer">首次使用请配置模型 API。抖音采集需在设置中自行开启并验证；也可选择本地视频独立测试分析链路。</p>
+            <div className="actions"><button className="plain" disabled={!ready || submitting} onClick={() => void importVideo()}>选择本地视频分析</button><button className="plain" onClick={() => setView('settings')}>配置模型连接</button></div>
+            <CollectionCheck input={input} ready={ready && !submitting}/>
+            <p className="disclaimer">首次使用请选择模型连接。采集检测不需要模型；真实抖音采集需在设置中开启，也可导入本地视频测试分析链路。</p>
           </section>
           <section className="history"><div className="section-heading"><h2>历史任务</h2><span>{tasks.length} 项</span></div>
             {tasks.length === 0 ? <div className="empty">暂无任务。先创建一个视频或博主分析任务。</div> : <div className="task-list">

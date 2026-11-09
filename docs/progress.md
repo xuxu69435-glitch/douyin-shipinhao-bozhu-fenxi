@@ -2,6 +2,16 @@
 
 范围：仅抖音，Windows本地Tauri 2桌面应用。**“代码已实现”≠“真实抖音通过”≠“Windows安装包通过”。**
 
+## 0.1.2 套餐授权与独立采集检测（2026-11-09）
+
+- 接入官方 Sign in with ChatGPT DevKit 固定版本，支持浏览器授权、DPAPI 凭据存储、自动续期、实际账户模型列表、公开 Responses 流完成判断及断开连接。与 API Key 模式显式区分，不自动回退。
+- 保留固定分析 harness；套餐通道不支持 max_output_tokens，记录接收字符/超时约束，且不把它当作费用硬上限。LangGraph Agent 继续暂缓。
+- 任务页增加不调用模型的独立采集检测，隔离进程最多 45 秒，保留已通过阶段；检查链接、作者、作品、第二页、真实下载及 FFprobe。结果本机保存并可导出 JSON。
+- 重新实测两条分享链接，解析通过；主页作品与作品详情均为 HTTP 403。作者核实、第二页及媒体未通过。详见 testing/share-links-2026-11-09.json；升级依赖不能替代访问权限验证。
+- 后端 89 项测试通过；官方 SDK 56 项通过、1 项 Windows 不适用项跳过；真实 DPAPI 加密桥接和跨进程解密使用合成凭据验证。真实官方授权、账户模型列表和套餐文字请求已验证；合成语音视频的真实 small CPU 推理、套餐分析及证据入库通过，见 testing/chatgpt-plan-0.1.2.json 与 testing/real-asr-0.1.2.json。
+- 真实推理重现 faster-whisper 1.2.1 与 PyAV 19 的 metadata_errors 接口不兼容；按上游已确认问题锁定 PyAV <19，Windows 锁文件使用 18.1.0，增加真实 PCM 解码回归。领域不足归为“未分类”，提示版本更新以避免旧缓存混用。
+- 官方接入版本、许可、调用限制及验收边界见 research/chatgpt-plan.md。桌面构建与安装结果见 testing/windows-update-0.1.2.md。
+
 ## 0.1.1 分享链接与界面修复（2026-11-06）
 
 - 支持抖音移动分享页 `/share/user/` 和 `/share/video/`，统一为标准主页/作品地址并移除跟踪参数。两条真实分享短链均已通过实网跳转解析。
@@ -60,7 +70,7 @@
 ## 代码控制与真实采集门槛
 
 - 默认`create_app`的Worker是`missing_collector`，新建任务会如实进入`blocked`。
-- **仅当用户自主在本机明确配置**`ANALYST_ENABLE_LIVE=1`、模型三项`OPENAI_BASE_URL`/`OPENAI_API_KEY`/`OPENAI_MODEL`，并安装F2/ASR依赖后才建立真实处理Worker。设置此环境变量**不等于**R0通过，也不保证平台接口可用。
+- **仅当用户自主在本机明确配置**`ANALYST_ENABLE_LIVE=1`、所选模型通道（API Key 三项或官方 ChatGPT 套餐授权），并安装F2/ASR依赖后才建立真实处理Worker。设置此环境变量**不等于**R0通过，也不保证平台接口可用。
 - 可自行提供受平台规则允许的Cookie文件路径`ANALYST_DOUYIN_COOKIE_FILE`；不会从浏览器自动收集登录态，也不会打包该文件。
 - `scripts/live_douyin_probe.py`是R0手工真实验收入口；`scripts/analyze_local_video.py`是**真实本地媒体→Whisper→真实LLM**独立入口。均不得将测试替身结果作为实测证据。
 - 审核主体归属：模型说“creator”时也暂不设置`creator_identity_verified=true`；程序不会据此断言博主个人喜好。主营业务无公开核实证据则不推断。

@@ -227,14 +227,11 @@ def build_opt_in_live_processor(factory: sessionmaker[Session], data_dir: Path, 
         configuration = load_runtime_settings(data_dir)
     if not configuration.enable_live:
         raise RuntimeError("Live collector was not explicitly enabled")
-    base_url = configuration.OPENAI_BASE_URL
-    api_key = configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else ""
-    model = configuration.OPENAI_MODEL
-    if not all([base_url, api_key, model]):
-        raise PrerequisiteMissing("LLM_NOT_CONFIGURED", "缺少 OPENAI_BASE_URL / OPENAI_API_KEY / OPENAI_MODEL")
+    from .chatgpt_plan import make_generator
+    generator = make_generator(configuration, data_dir)
     cookie_file = configuration.cookie_file
     cookie = Path(cookie_file).read_text(encoding="utf8").strip() if cookie_file else None
     return LiveTaskProcessor(
         factory, data_dir, F2Collector(cookie), FasterWhisperTranscriber(configuration.whisper_model),
-        OpenAICompatibleInsightGenerator(base_url, api_key, model),
+        generator,
     )

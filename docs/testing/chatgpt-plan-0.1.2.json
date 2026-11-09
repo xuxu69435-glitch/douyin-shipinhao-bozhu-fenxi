@@ -1,0 +1,103 @@
+{
+  "test_type": "REAL_CHATGPT_PLAN_INFERENCE_ON_SYNTHETIC_TEXT",
+  "model": "gpt-6.1-sol",
+  "provider": "official_chatgpt_plan",
+  "signed_in": true,
+  "sharing_authorized": true,
+  "completed_inference": true,
+  "schema_and_evidence_validation": "passed",
+  "separate_api_key_used": false,
+  "existing_api_key_ciphertext_preserved": true,
+  "real_video_or_asr_tested": false,
+  "duration_seconds": 7.8,
+  "metrics": {
+    "harness_version": "fixed-analysis-v1",
+    "requests": 1,
+    "max_requests": 12,
+    "max_output_tokens": null,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "usage_reported": false,
+    "chunks": 1,
+    "max_output_characters": 32768,
+    "provider": "chatgpt_plan"
+  },
+  "input_provenance": "synthetic_text_not_video_transcription",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "今天讨论旅游攻略。行程安排得太满，休假容易变成赶路。"
+    },
+    {
+      "segment_id": 1,
+      "text": "这是一个示例叙述者在表达观点，不能由此确定上传者的个人喜好。"
+    }
+  ],
+  "result": {
+    "summary": "内容讨论旅游行程安排，指出行程过满容易让休假变成赶路，并明确说明该观点来自示例叙述者，不能据此确定上传者的个人喜好。",
+    "summary_evidence": [
+      {
+        "video_id": "synthetic-text-probe",
+        "transcript_version": "synthetic-text-v1",
+        "segment_id": 0,
+        "start_ms": 0,
+        "end_ms": 5000
+      },
+      {
+        "video_id": "synthetic-text-probe",
+        "transcript_version": "synthetic-text-v1",
+        "segment_id": 1,
+        "start_ms": 5000,
+        "end_ms": 10000
+      }
+    ],
+    "primary_domain": "旅游",
+    "secondary_topics": [
+      "旅游攻略",
+      "行程安排"
+    ],
+    "content_format": "观点叙述",
+    "key_claims": [
+      {
+        "text": "行程安排得太满，休假容易变成赶路。",
+        "speaker_role": "narrator",
+        "attribution_basis": "第1段明确说明这是示例叙述者在表达观点。",
+        "creator_identity_verified": false,
+        "evidence": [
+          {
+            "video_id": "synthetic-text-probe",
+            "transcript_version": "synthetic-text-v1",
+            "segment_id": 0,
+            "start_ms": 0,
+            "end_ms": 5000
+          },
+          {
+            "video_id": "synthetic-text-probe",
+            "transcript_version": "synthetic-text-v1",
+            "segment_id": 1,
+            "start_ms": 5000,
+            "end_ms": 10000
+          }
+        ]
+      },
+      {
+        "text": "不能由示例叙述者的观点确定上传者的个人喜好。",
+        "speaker_role": "narrator",
+        "attribution_basis": "第1段直接说明不能由此确定上传者的个人喜好。",
+        "creator_identity_verified": false,
+        "evidence": [
+          {
+            "video_id": "synthetic-text-probe",
+            "transcript_version": "synthetic-text-v1",
+            "segment_id": 1,
+            "start_ms": 5000,
+            "end_ms": 10000
+          }
+        ]
+      }
+    ],
+    "explicitly_stated_preferences": [],
+    "discussed_entities": [],
+    "provenance": "real_model"
+  }
+}

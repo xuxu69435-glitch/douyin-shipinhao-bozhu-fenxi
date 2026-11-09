@@ -1,0 +1,74 @@
+{
+  "profile": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "blocked",
+        "message": "主页地址已解析，但尚未从真实作品验证作者归属"
+      },
+      {
+        "name": "works",
+        "status": "blocked",
+        "message": "平台返回 HTTP 403，当前访问未获准；尚未取得作者、作品或媒体证据"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "media",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/user/MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "source_kind": "profile",
+    "platform_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "error_code": "HTTP_403"
+  },
+  "video": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "blocked",
+        "message": "平台返回 HTTP 403，当前访问未获准；尚未取得作者、作品或媒体证据"
+      },
+      {
+        "name": "works",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "media",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/video/7699679130752748809",
+    "source_kind": "video",
+    "platform_id": "7699679130752748809",
+    "error_code": "HTTP_403"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "PACKAGED_SIDECAR_SMOKE",
+  "python": "3.12.2",
+  "platform": "win32",
+  "loopback_health": "passed",
+  "invalid_token_rejected": true,
+  "persisted_task_after_restart": true,
+  "worker_block_status_expected": true,
+  "python_child_terminated": true,
+  "private_settings_persisted": true,
+  "synthetic_chinese_silent_video_imported": true,
+  "real_asr_llm_tested": false,
+  "tauri_process_lifecycle_tested": false,
+  "douyin_live_tested": false,
+  "chatgpt_bridge_disconnected_state": "passed",
+  "chatgpt_no_account_blocks_without_api_fallback": true,
+  "isolated_collection_probe_without_llm": "passed"
+}

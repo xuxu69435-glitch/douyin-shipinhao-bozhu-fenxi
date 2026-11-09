@@ -5,11 +5,11 @@
 ## 当前状态
 
 - 仅开发抖音，不开发微信视频号。
-- Windows / Python 3.12.2 后端 76 项测试通过；前端完整构建、Rust 编译、PyInstaller Sidecar 及 NSIS 安装包已运行验证。具体生命周期与安装结果以 docs/testing 下的真实记录为准。
+- Windows / Python 3.12.2 后端 89 项测试通过；前端完整构建、Rust 编译、PyInstaller Sidecar 及 NSIS 安装包已运行验证。具体生命周期与安装结果以 docs/testing 下的真实记录为准。
 - 分享短链的 `/share/user/`、`/share/video/` 跳转已验证；匿名 F2 作品读取仍返回 HTTP 403，按可恢复的采集阻塞记录，不能据此声称真实采集通过。
 - 真实抖音作者、第二页、下载可播放性、Whisper 权重推理和真实 LLM 效果仍待真实样本验证。合成媒体与测试替身结果应单独记录。
 - LangGraph Agent 暂缓实现，当前采用固定流程与轻量 harness，见 harness-decision.md。不要擅自加入自主工具循环或多 Agent。
-- 模型入口为桌面的“模型与采集设置”，只使用 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL。Windows 保存密钥使用 DPAPI，API 不回显密钥。真实采集默认关闭。
+- 模型入口为“模型与采集设置”：API Key 使用 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL；ChatGPT 套餐使用官方独立授权与 CHATGPT_MODEL，禁止隐式回退至 API Key。Windows 凭据用 DPAPI，API 不回显令牌或密钥。真实采集默认关闭，独立采集检测不得加载模型凭据。
 - 保持仓库现有 Git 提交身份。远端推送由维护者手动执行。
 
 ## 实现与验证边界

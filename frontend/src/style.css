@@ -109,6 +109,13 @@ main { height: 100%; min-height: 0; overflow-y: auto; padding: 0 28px 28px; scro
 .collector-settings summary span { float: right; color: #869688; font-size: 12px; }
 .collector-settings[open] summary { margin-bottom: 16px; }
 .collector-settings label { margin-top: 14px; }
+.wide-field { grid-column: 1 / -1; }
+.settings-form select { width: 100%; padding: 9px; margin-top: 7px; border: 1px solid #d6ded5; border-radius: 8px; background: white; }
+.chatgpt-connection { padding: 16px; border: 1px solid #d6ded5; border-radius: 10px; }
+.chatgpt-connection .actions { margin: 8px 0 16px; }
+.collection-check { margin-top: 12px; font-size: 12px; overflow-wrap: anywhere; }
+.collection-check details { margin-top: 10px; padding: 12px; background: #f1f4ef; border-radius: 8px; }
+.collection-check li { margin-bottom: 8px; line-height: 1.6; }
 .runtime-checks { margin-top: 16px; font-size: 12px; }
 .library-list { max-height: calc(100dvh - 205px); overflow-y: auto; }
 @media (max-width: 1000px) and (min-width: 851px) { .shell { grid-template-columns: 180px minmax(0, 1fr); } main { padding-inline: 20px; } .task-workspace { gap: 16px; grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr); } .create-panel { padding: 18px; } .create-panel .section-heading > span { display: none; } }

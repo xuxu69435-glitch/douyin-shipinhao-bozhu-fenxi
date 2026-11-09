@@ -24,6 +24,7 @@ from .evidence import segments_for_version, subtitles_text, assert_analysis_inte
 from .reporting import build_creator_report, export_report_markdown, ReportNotReady
 from .runtime_settings import RuntimeSettings, load_runtime_settings, save_runtime_settings
 import json
+from .chatgpt_plan import ChatGPTPlanBridge, ChatGPTPlanError, make_generator
 
 
 def create_app(data_dir: Path, token: str, processor: Processor = missing_collector,
@@ -53,6 +54,7 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
                 await active_processor(task_id, control)
         processor = configured_processor
     worker = SingleWorker(factory, processor)
+    chatgpt = ChatGPTPlanBridge(data_dir)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -60,10 +62,11 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
         try:
             yield
         finally:
+            chatgpt.cancel()
             await worker.stop()
             engine.dispose()
 
-    app = FastAPI(title="Douyin Analyst", version="0.1.1", lifespan=lifespan)
+    app = FastAPI(title="Douyin Analyst", version="0.1.2", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://tauri.localhost", "tauri://localhost", "http://localhost:5173", "http://127.0.0.1:5173"],
@@ -85,7 +88,12 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
     @api.get("/settings")
     def get_settings():
         try:
-            return load_runtime_settings(data_dir).public_view(data_dir)
+            view = load_runtime_settings(data_dir, include_api_key=False).public_view(data_dir)
+            path = data_dir / "model-settings.json"
+            if path.exists():
+                saved = json.loads(path.read_text(encoding="utf8"))
+                view["api_key_configured"] = saved.get("api_key_present", bool(saved.get("protected_api_key") or saved.get("OPENAI_API_KEY")))
+            return view
         except (ValueError, OSError):
             raise HTTPException(409, "本机配置无法读取，请检查应用数据目录或重新配置")
 
@@ -93,18 +101,57 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
     def update_settings(body: RuntimeSettings):
         if any_running():
             raise HTTPException(409, "请先暂停或完成正在执行的任务，再修改配置")
-        if body.OPENAI_API_KEY is None:
-            body.OPENAI_API_KEY = load_runtime_settings(data_dir).OPENAI_API_KEY
         try:
-            save_runtime_settings(data_dir, body)
+            save_runtime_settings(data_dir, body, preserve_key=body.OPENAI_API_KEY is None)
         except OSError:
             raise HTTPException(500, "无法保存本机配置")
-        return body.public_view(data_dir)
+        return get_settings()
 
     def any_running():
         with factory() as session:
             return session.scalar(select(TaskRecord.id).where(
                 TaskRecord.status.in_(["running", "pausing", "cancelling"])).limit(1)) is not None
+
+    @api.get("/chatgpt/status")
+    def chatgpt_status():
+        try:
+            return chatgpt.status()
+        except ChatGPTPlanError as exc:
+            return {"status": "disconnected", "sharing": False,
+                    "error": {"code": exc.code, "message": str(exc)}}
+
+    @api.post("/chatgpt/sign-in")
+    def chatgpt_sign_in():
+        if any_running():
+            raise HTTPException(409, "请先暂停正在执行的任务，再登录模型账户")
+        return chatgpt.sign_in()
+
+    @api.post("/chatgpt/cancel")
+    def chatgpt_cancel():
+        chatgpt.cancel()
+        return chatgpt_status()
+
+    @api.post("/chatgpt/disconnect")
+    def chatgpt_disconnect():
+        if any_running():
+            raise HTTPException(409, "请先暂停正在执行的任务，再断开账户")
+        chatgpt.cancel()
+        try:
+            return chatgpt.call("disconnect")
+        except ChatGPTPlanError as exc:
+            raise HTTPException(502, str(exc))
+
+    @api.get("/chatgpt/models")
+    def chatgpt_models():
+        try:
+            return chatgpt.call("models")
+        except ChatGPTPlanError as exc:
+            raise HTTPException(502, str(exc))
+
+    @api.post("/chatgpt/usage")
+    def chatgpt_usage():
+        import webbrowser
+        return {"opened": webbrowser.open("https://chatgpt.com/settings/usage")}
 
     @api.post("/settings/test")
     async def test_model_connection():
@@ -112,9 +159,8 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
         import httpx
         from .insights import OpenAICompatibleInsightGenerator, anchor_insight
         configuration = load_runtime_settings(data_dir)
-        key = configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else ""
         try:
-            generator = OpenAICompatibleInsightGenerator(configuration.OPENAI_BASE_URL, key, configuration.OPENAI_MODEL)
+            generator = make_generator(configuration, data_dir)
             segment = SimpleNamespace(video_id="connection-test", transcript_version="connection-test",
                                       segment_id=0, start_ms=0, end_ms=1000, text="这是一段模型连接测试字幕。")
             draft = await generator.generate([segment])
@@ -123,9 +169,11 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
             raise HTTPException(502, f"模型服务返回 HTTP {exc.response.status_code}，请检查密钥、模型及接口兼容性")
         except httpx.HTTPError:
             raise HTTPException(502, "无法连接模型服务，请检查 API 地址和网络")
+        except (ChatGPTPlanError, PrerequisiteMissing) as exc:
+            raise HTTPException(422, str(exc))
         except (ValueError, KeyError, IndexError, TypeError):
             raise HTTPException(422, "模型配置不完整或响应不符合分析所需的 JSON 及证据格式")
-        return {"ok": True, "model": configuration.OPENAI_MODEL, "message": "连接及结构化证据校验通过；尚未测试真实视频分析"}
+        return {"ok": True, "model": generator.model, "message": "连接及结构化证据校验通过；尚未测试真实视频分析"}
 
     @api.get("/diagnostics")
     def diagnostics():
@@ -160,6 +208,28 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
             raise HTTPException(503, "语音组件或其本机运行库无法加载，请检查安装完整性")
         return {"available": WhisperModel is not None, "weights_loaded": False,
                 "ctranslate2": ctranslate2.__version__, "onnxruntime": onnxruntime.__version__}
+
+    from .collection_probe import ProbeInput
+
+    @api.post("/diagnostics/douyin")
+    def check_douyin(body: ProbeInput):
+        from .collection_probe import run_isolated_probe
+        if any_running():
+            raise HTTPException(409, "请先暂停正在执行的任务，再检测采集")
+        configuration = load_runtime_settings(data_dir, include_api_key=False)
+        result = run_isolated_probe(body.input_text, configuration.enable_live,
+                                    configuration.cookie_file, data_dir / "scratch")
+        directory = data_dir / "diagnostics"
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "douyin-latest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf8")
+        return result
+
+    @api.get("/diagnostics/douyin/export")
+    def export_douyin_check():
+        path = data_dir / "diagnostics" / "douyin-latest.json"
+        if not path.is_file():
+            raise HTTPException(404, "请先运行一次采集检测")
+        return {"filename": "douyin-collection-check.json", "content": path.read_text(encoding="utf8")}
 
     @api.get("/videos/{video_id}/runs")
     def video_runs(video_id: str):

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiRequest, type RuntimeSettingsView, type Diagnostics } from './api';
+import ChatGPTConnection from './ChatGPTConnection';
 
 export default function SettingsPage({ ready }: { ready: boolean }) {
   const [settings, setSettings] = useState<RuntimeSettingsView | null>(null);
@@ -38,11 +39,17 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
 
   return <section className="settings-page">
     <div className="eyebrow">LOCAL SETTINGS</div><h1>模型与采集设置</h1>
-    <p className="muted">使用支持 Chat Completions 和 JSON 输出的兼容服务。分析时只向该服务发送字幕。</p>
+    <p className="muted">选择 ChatGPT 套餐授权或兼容 API 服务。分析时向所选服务发送字幕。</p>
     {error && <div className="warning" role="alert">{error}</div>}
     {message && <p className="success" role="status">{message}</p>}
     {!settings ? <p className="muted">{ready ? '正在读取配置…' : '请等待本地后端连接。'}</p> : <>
       <div className="settings-form">
+        <label className="wide-field">模型接入方式 <select value={settings.model_provider}
+          onChange={event => setSettings({ ...settings, model_provider: event.target.value as 'api' | 'chatgpt' })}>
+          <option value="chatgpt">使用 ChatGPT 套餐（官方授权登录）</option><option value="api">使用 API Key</option>
+        </select></label>
+        {settings.model_provider === 'chatgpt' ? <ChatGPTConnection model={settings.CHATGPT_MODEL}
+          onModel={model => setSettings(previous => previous && ({ ...previous, CHATGPT_MODEL: model }))}/> : <>
         <label>API 基础地址 <small>OPENAI_BASE_URL</small>
           <input type="url" value={settings.OPENAI_BASE_URL} placeholder="https://你的服务地址/v1"
             onChange={event => setSettings({ ...settings, OPENAI_BASE_URL: event.target.value })}/>
@@ -58,6 +65,7 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
           <span>{settings.api_key_encrypted ? '使用 Windows 用户加密，保存在本机应用数据目录。' : '仅保存于本机应用数据目录，请保护好该目录。'}密钥不会回显。</span>
         </label>
         {settings.api_key_configured && <label className="checkbox"><input type="checkbox" checked={clearKey} onChange={event => setClearKey(event.target.checked)}/>清除已保存的密钥</label>}
+        </>}
         <label className="wide-field">本地语音识别模型
           <input value={settings.whisper_model} placeholder="small，或已下载模型的完整目录"
             onChange={event => setSettings({ ...settings, whisper_model: event.target.value })}/>
@@ -73,8 +81,8 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
         </label>
         </details>
         <div className="actions"><button className="primary" disabled={busy} onClick={() => void save()}>保存配置</button>
-          <button className="plain" disabled={busy} onClick={() => void save(true)}>{busy ? '正在处理…' : '保存并测试 API'}</button></div>
-        <p className="muted">测试 API 会发送一句示例字幕并产生少量模型用量，不会采集抖音或下载语音模型。</p>
+          <button className="plain" disabled={busy} onClick={() => void save(true)}>{busy ? '正在处理…' : '保存并测试所选模型'}</button></div>
+        <p className="muted">测试会发送一句示例字幕并产生少量所选服务的用量，不会采集抖音或下载语音模型。</p>
       </div>
       <section className="runtime-checks"><h2>本机环境</h2>
         {diagnostics && <p>FFmpeg：{diagnostics.ffmpeg ? '可用' : '缺失'} · FFprobe：{diagnostics.ffprobe ? '可用' : '缺失'} ·

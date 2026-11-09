@@ -1,0 +1,11 @@
+{
+  "name": "douyin-analyst-chatgpt-bridge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild main.mjs --bundle --platform=node --format=esm --outfile=dist/bridge.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+    "test": "esbuild vendor/siwc-local/src/*.ts --outdir=vendor/siwc-local/dist --platform=node --format=esm && node --test vendor/siwc-local/test/*.test.mjs"
+  },
+  "dependencies": { "jose": "6.1.0", "openai": "7.21.0", "proper-lockfile": "4.1.2" },
+  "devDependencies": { "esbuild": "0.25.12" }
+}

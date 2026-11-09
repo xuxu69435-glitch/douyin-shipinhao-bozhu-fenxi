@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.database import build_session_factory
-from app.insights import OpenAICompatibleInsightGenerator
+from app.chatgpt_plan import make_generator
 from app.models import TranscriptSegment  # ensure all tables registered
 from app import models  # noqa: F401
 from app.pipeline import analyze_local_file
@@ -26,8 +26,7 @@ def main():
     parser.add_argument("--whisper-model")
     args = parser.parse_args()
     configuration = load_runtime_settings(args.data_dir)
-    generator = OpenAICompatibleInsightGenerator(configuration.OPENAI_BASE_URL,
-        configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else "", configuration.OPENAI_MODEL)
+    generator = make_generator(configuration, args.data_dir)
     factory, engine = build_session_factory(args.data_dir)
     try:
         result = asyncio.run(analyze_local_file(

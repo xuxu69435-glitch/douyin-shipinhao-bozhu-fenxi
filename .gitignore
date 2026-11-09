@@ -24,5 +24,7 @@ frontend/src-tauri/binaries/runtime/
 frontend/src-tauri/binaries/_internal/
 model-settings.json
 model-settings.tmp
+chatgpt-auth.json
+chatgpt-host.json
 frontend/src-tauri/gen/
 logs/

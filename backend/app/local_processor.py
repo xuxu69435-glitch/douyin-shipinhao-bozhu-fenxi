@@ -31,9 +31,8 @@ def import_local_video(path: Path, data_dir: Path):
 
 
 async def run_local_task(task_id, control, factory, data_dir, configuration):
-    key = configuration.OPENAI_API_KEY.get_secret_value() if configuration.OPENAI_API_KEY else ""
-    if not all((configuration.OPENAI_BASE_URL, key, configuration.OPENAI_MODEL)):
-        raise PrerequisiteMissing("LLM_NOT_CONFIGURED", "请在模型与采集设置中配置 API 地址、密钥和模型名")
+    from .chatgpt_plan import make_generator
+    generator = make_generator(configuration, data_dir)
     await control.checkpoint()
     with factory.begin() as session:
         task = session.get(TaskRecord, task_id)
@@ -47,7 +46,7 @@ async def run_local_task(task_id, control, factory, data_dir, configuration):
         author_platform_id="local-file-no-platform-author", title=title,
         source_url=f"local://sha256/{fingerprint}",
         transcriber=FasterWhisperTranscriber(configuration.whisper_model),
-        generator=OpenAICompatibleInsightGenerator(configuration.OPENAI_BASE_URL, key, configuration.OPENAI_MODEL),
+        generator=generator,
     )
     await control.checkpoint()
     with factory.begin() as session:

@@ -34,7 +34,7 @@ class TaskView(BaseModel):
 class HealthView(BaseModel):
     status: Literal["ok"] = "ok"
     stage: Literal["M0"] = "M0"
-    version: str = "0.1.1"
+    version: str = "0.1.2"
 
 
 class EvidenceRef(BaseModel):

@@ -2,24 +2,24 @@
 
 Windows 本地桌面应用：Tauri 2 + React + Python 3.12 / FastAPI + SQLite，支持任务管理、本地视频分析、可选抖音采集、字幕与证据定位、博主报告导出。
 
-当前已有可构建的 Windows 安装版，已通过离线桌面生命周期验证。真实抖音采集、Whisper 推理和大模型分析质量仍待真实样本验证。当前采用固定分析流程与轻量 harness，LangGraph 审查 Agent 暂缓实现。
+当前已有可构建的 Windows 安装版，已通过离线桌面生命周期验证。官方 ChatGPT 套餐授权、真实模型请求及合成语音视频的 Whisper 分析链路已验证；真实抖音采集和真实视频分析质量仍待验证。当前采用固定分析流程与轻量 harness，LangGraph 审查 Agent 暂缓实现。
 
 ## 开始使用
 
 安装程序生成于：
 
 ```text
-frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.1_x64-setup.exe
+frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.2_x64-setup.exe
 ```
 
 启动应用，打开左侧 **模型与采集设置**：
 
-1. 填写 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL，点击“保存并测试 API”。地址通常以 /v1 结尾，不包含 /chat/completions。
+1. 选择“使用 ChatGPT 套餐”，完成官方浏览器登录授权并选择可用模型；或选择 API Key 并填写 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL。点击“保存并测试所选模型”。
 2. 填写 Whisper 模型名（默认 small）或已有本地模型目录。首次使用模型名需下载权重，语音识别在本机运行。
 3. 在任务中心点击“选择本地视频分析”，先独立测试字幕、摘要及证据。
 4. 需要测试抖音时，展开“抖音采集设置”并开启真实采集开关，按需提供自己有权使用的 Cookie 文件路径。支持作品、主页和分享文本，博主上限 10/30 条。
 
-模型服务须兼容 Chat Completions、JSON mode 和 max_tokens。测试 API 会产生少量服务用量，不采集视频。API 密钥保存在本机数据目录，Windows 使用当前用户 DPAPI 加密，页面不回显，配置不进入 Git。分析字幕会发送给所配置的模型服务。
+API Key 模式须兼容 Chat Completions、JSON mode 和 max_tokens；ChatGPT 套餐模式使用官方 Responses 授权通道。连接测试会产生少量所选服务用量，不采集视频。API 密钥保存在本机数据目录，Windows 使用当前用户 DPAPI 加密，页面不回显，配置不进入 Git。分析字幕会发送给所配置的模型服务。
 
 详见 [API 接入与真实测试](docs/api-setup.md)、[实际进度](docs/progress.md)、[Harness 取舍](docs/research/harness-decision.md)。
 
@@ -28,10 +28,12 @@ frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.1_x64-setup.exe
 - 任务创建、历史、阶段状态、暂停/取消/恢复与重启持久化。
 - 本地视频原生选择及导入，F2 可选采集边界、分页去重和稳定作品 ID。
 - 内置 FFmpeg/FFprobe，faster-whisper 可选权重推理，带时间戳及版本的字幕。
-- 真实兼容接口请求、有限重试、长字幕固定分段与汇总；每次执行最多 12 次请求，每次输出上限 4096 tokens。
+- 真实兼容接口请求、有限重试、长字幕固定分段与汇总；每次执行最多 12 次请求。API Key 模式每次输出上限 4096 tokens；套餐通道采用超时和接收字符限制，不提供输出 token 费用硬上限。
 - Pydantic、字幕段引用和证据版本校验；报告到字幕定位及签名媒体 Range。
 - 领域/主题程序统计，明确区分说话人归属；公开证据不足时不推断主营业务或博主个人偏好。
 - Markdown/JSON 报告、SRT/VTT 字幕，通过原生保存对话框导出。
+- 官方 ChatGPT 套餐登录、模型列表、用量管理与断开连接；API Key 为单独选择，不自动回退。
+- 独立采集检测和 JSON 导出，逐步核对分享解析、作者、作品、第二页和真实媒体，不需要模型配置。
 - 模型设置和连接测试，Windows 密钥加密保存，分析执行记录保留调用次数与服务商返回的用量。
 - Rust 管理 Sidecar 与 Windows Job 进程树，NSIS 安装版包含 Python 运行库、采集/语音组件及本次构建选择的媒体工具；模型权重由用户另行下载。
 
@@ -41,7 +43,7 @@ frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.1_x64-setup.exe
 
 需要 Python 3.12、Node 20+、Rust MSVC 工具链、Visual Studio C++ Build Tools / Windows SDK 及 WebView2。FFmpeg 用于测试和选择内置媒体工具的构建。
 
-构建脚本支持查找仓库上一级 `.toolchains` 内的 Rust 工具链。全新环境可使用 Python 自带 venv 和 pip：
+构建脚本支持查找仓库上一级 `.toolchains` 内的 Rust 工具链。登录桥接构建固定使用 Node.js 22.20.0。全新环境可使用 Python 自带 venv 和 pip：
 
 ```powershell
 py -3.12 -m venv backend\.venv

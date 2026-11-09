@@ -1,13 +1,16 @@
 """PyInstaller entry point. Tauri controls port, auth token and data directory."""
 
 import os
-import uvicorn
-
-from app.config import Settings
-from app.main import create_app
+import sys
 
 
 def main():
+    if "--collection-probe" in sys.argv:
+        from app.collection_probe import probe_main
+        return probe_main()
+    import uvicorn
+    from app.config import Settings
+    from app.main import create_app
     settings = Settings.from_env()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     app = create_app(settings.data_dir, settings.backend_token,

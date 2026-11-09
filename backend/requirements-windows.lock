@@ -13,7 +13,7 @@ annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.16.0
 async-timeout==5.0.1
-av==19.0.2
+av==18.1.0
 black==24.10.0
 browser-cookie3==0.20.1
 certifi==2026.10.23

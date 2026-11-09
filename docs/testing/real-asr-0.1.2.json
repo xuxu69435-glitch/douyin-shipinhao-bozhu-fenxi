@@ -1,0 +1,60 @@
+{
+  "test_type": "REAL_ASR_AND_CHATGPT_PLAN_ON_SYNTHETIC_MEDIA",
+  "input_provenance": "locally generated MP4 with Windows SAPI Huihui Mandarin voice",
+  "real_douyin_media": false,
+  "model_repo": "Systran/faster-whisper-small",
+  "model_revision": "536b0662742c02347bc0e980a01041f333bce120",
+  "asr_engine": "faster-whisper/1.2.1",
+  "pyav": "18.1.0",
+  "device": "cpu",
+  "compute_type": "int8",
+  "llm_model": "gpt-6.1-sol",
+  "separate_api_key_used": false,
+  "duration_seconds": 16.56,
+  "result": {
+    "video_id": "73001994-1993-44f4-8a68-7d0cd39bc2dc",
+    "status": "analyzed",
+    "transcript_version": "asr-86d1a2dc0f7276b8bf6d9c1f",
+    "analysis_version": "llm-5b6dbd06034cea17af461ee8",
+    "reused_transcript": false,
+    "reused_analysis": false
+  },
+  "segments": [
+    {
+      "segment_id": 0,
+      "start_ms": 0,
+      "end_ms": 6000,
+      "text": "这是一次本地视频分析测试,今天讨论如何安排旅行。"
+    },
+    {
+      "segment_id": 1,
+      "start_ms": 7000,
+      "end_ms": 12000,
+      "text": "旅游攻略可以提供参考,但不要把每天的行程排得太满。"
+    },
+    {
+      "segment_id": 2,
+      "start_ms": 13000,
+      "end_ms": 18000,
+      "text": "出发之前,要确认交通、开放时间和自己的体力。"
+    },
+    {
+      "segment_id": 3,
+      "start_ms": 19000,
+      "end_ms": 26000,
+      "text": "视频里的叙述者不一定就是上传者,因此不能直接判断博主的个人偏好。"
+    }
+  ],
+  "metrics": {
+    "harness_version": "fixed-analysis-v1",
+    "requests": 1,
+    "max_requests": 12,
+    "max_output_tokens": null,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "usage_reported": false,
+    "chunks": 1,
+    "max_output_characters": 32768,
+    "provider": "chatgpt_plan"
+  }
+}
