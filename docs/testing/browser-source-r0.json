@@ -1,0 +1,102 @@
+{
+  "record_scope": "Historical first integrated probe before bounded CDN fallback; profile media failed. Final result is browser-source-r0-0.1.5.json.",
+  "context": {
+    "date": "2026-11-10",
+    "collector": "normal_edge_playwright_1.65.0",
+    "credential_source": "user_imported_encrypted_store",
+    "model_called": false
+  },
+  "video": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": true,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "passed",
+        "message": "已从真实作品详情取得作者"
+      },
+      {
+        "name": "works",
+        "status": "skipped",
+        "message": "单视频检测不请求作者作品列表"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "单视频检测不检查分页"
+      },
+      {
+        "name": "media",
+        "status": "passed",
+        "message": "真实下载文件已通过 FFprobe 视频流校验"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/video/7699679130752748809",
+    "source_kind": "video",
+    "platform_id": "7699679130752748809",
+    "collector_provider": "browser",
+    "access_mode": "user_imported_cookie",
+    "author_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "video_id": "7699679130752748809",
+    "media": {
+      "sha256": "da879319eb0d872b685f2945d1e8d9a93ee0fae75bc7fe4ff6d61e15def6546e",
+      "size_bytes": 28962553,
+      "duration_seconds": 150.165011,
+      "streams": [
+        "audio",
+        "video"
+      ]
+    }
+  },
+  "profile": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "passed",
+        "message": "已从真实作品验证作者归属"
+      },
+      {
+        "name": "works",
+        "status": "passed",
+        "message": "取得 30 条去重作品"
+      },
+      {
+        "name": "page2",
+        "status": "passed",
+        "message": "第二页新增 12 个作品 ID"
+      },
+      {
+        "name": "media",
+        "status": "blocked",
+        "message": "检测未通过（InvalidMedia），请检查网络、访问权限和本机依赖"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/user/MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "source_kind": "profile",
+    "platform_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "collector_provider": "browser",
+    "access_mode": "user_imported_cookie",
+    "author_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "works": {
+      "pages": 2,
+      "unique": 30,
+      "second_page_new_ids": 12,
+      "stop_reason": "limit_reached"
+    },
+    "error_code": "InvalidMedia"
+  }
+}

@@ -14,7 +14,7 @@ import time
 from pydantic import BaseModel, Field
 
 from .links import parse_douyin_input, resolve_short_link
-from .media import download_verified_media, subprocess_options
+from .media import download_verified_media, download_media_candidates, subprocess_options
 
 
 class ProbeInput(BaseModel):
@@ -27,7 +27,8 @@ def new_report():
                       for key in ("link", "author", "works", "page2", "media")]}
 
 
-async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda report: None, collector=None, cookie=None):
+async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda report: None, collector=None, cookie=None,
+                collector_provider="f2"):
     report = new_report()
 
     def step(name, status, message):
@@ -51,7 +52,12 @@ async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda
             if cookie is None and cookie_file:
                 from .douyin_session import read_cookie_file
                 cookie = read_cookie_file(cookie_file)
-            collector = F2Collector(cookie)
+            if collector_provider == "browser":
+                from .browser_collector import BrowserCollector
+                collector = BrowserCollector(cookie)
+            else:
+                collector = F2Collector(cookie)
+        report["collector_provider"] = collector_provider
         report["access_mode"] = "user_imported_cookie" if cookie else "anonymous"
         if link.kind == "profile":
             author_id = await collector.profile_id(link.url)
@@ -78,7 +84,8 @@ async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda
             raise ValueError("missing_media")
         scratch_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="douyin-probe-", dir=scratch_dir) as temporary:
-            info = await download_verified_media(sample.media_url, Path(temporary) / "sample.mp4")
+            info = await download_media_candidates([sample.media_url, *sample.media_urls], Path(temporary) / "sample.mp4",
+                                                   downloader=download_verified_media)
         report["media"] = info
         step("media", "passed", "真实下载文件已通过 FFprobe 视频流校验")
         report["complete"] = all(row["status"] in {"passed", "skipped"} for row in report["steps"])
@@ -108,7 +115,7 @@ async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda
     return report
 
 
-def run_isolated_probe(text, allow_collection, cookie_file, scratch_dir, timeout=45, *, cookie=None):
+def run_isolated_probe(text, allow_collection, cookie_file, scratch_dir, timeout=45, *, cookie=None, collector_provider="f2"):
     command = ([sys.executable, "--collection-probe"] if getattr(sys, "frozen", False) else
                [sys.executable, str(Path(__file__).resolve().parents[1] / "sidecar.py"), "--collection-probe"])
     # Never pass model credentials into the probe, even through inherited environment.
@@ -135,7 +142,8 @@ def run_isolated_probe(text, allow_collection, cookie_file, scratch_dir, timeout
     finished = False
     try:
         process.stdin.write(json.dumps({"text": text, "allow_collection": allow_collection,
-            "cookie_file": cookie_file, "cookie": cookie, "scratch_dir": str(scratch_dir)}, ensure_ascii=True).encode("utf8"))
+            "cookie_file": cookie_file, "cookie": cookie, "collector_provider": collector_provider,
+            "scratch_dir": str(scratch_dir)}, ensure_ascii=True).encode("utf8"))
         process.stdin.close()
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -173,4 +181,5 @@ def probe_main():
     def publish(report):
         print(json.dumps(report, ensure_ascii=True), flush=True)
     asyncio.run(probe(payload["text"], payload["allow_collection"], payload["cookie_file"],
-                      Path(payload["scratch_dir"]), publish, cookie=payload.get("cookie")))
+                      Path(payload["scratch_dir"]), publish, cookie=payload.get("cookie"),
+                      collector_provider=payload.get("collector_provider", "f2")))

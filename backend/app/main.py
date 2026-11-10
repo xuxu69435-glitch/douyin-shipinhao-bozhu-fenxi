@@ -66,7 +66,7 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
             await worker.stop()
             engine.dispose()
 
-    app = FastAPI(title="Douyin Analyst", version="0.1.4", lifespan=lifespan)
+    app = FastAPI(title="Douyin Analyst", version="0.1.5", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://tauri.localhost", "tauri://localhost", "http://localhost:5173", "http://127.0.0.1:5173"],
@@ -226,7 +226,9 @@ def create_app(data_dir: Path, token: str, processor: Processor = missing_collec
         except ValueError as exc:
             raise HTTPException(422, str(exc))
         result = run_isolated_probe(body.input_text, configuration.enable_live,
-                                    configuration.cookie_file, data_dir / "scratch", cookie=cookie)
+                                    configuration.cookie_file, data_dir / "scratch", cookie=cookie,
+                                    collector_provider=configuration.collector_provider,
+                                    timeout=125 if configuration.collector_provider == "browser" else 45)
         directory = data_dir / "diagnostics"
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "douyin-latest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf8")

@@ -127,3 +127,19 @@ async def download_verified_media(url: str, destination: Path, max_bytes: int = 
     except Exception:
         destination.unlink(missing_ok=True)
         raise
+
+
+async def download_media_candidates(urls, destination, *, downloader=None, checkpoint=None):
+    """Try at most three actual addresses returned for this same video."""
+    downloader = downloader or download_verified_media
+    error = None
+    for url in list(dict.fromkeys(url for url in urls if url))[:3]:
+        if checkpoint:
+            await checkpoint()
+        try:
+            return await downloader(url, destination)
+        except Exception as exc:
+            error = exc
+    if error is not None:
+        raise error
+    raise InvalidMedia("作品没有可用的真实媒体地址")

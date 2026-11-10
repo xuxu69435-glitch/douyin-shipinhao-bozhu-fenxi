@@ -693,7 +693,7 @@ dependencies = [
 
 [[package]]
 name = "douyin-analyst-desktop"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "hex",
  "hmac",

@@ -1,0 +1,22 @@
+{
+  "record_scope": "Historical early prototype, before integrated adapter acceptance.",
+  "test_type": "REAL_EDGE_PAGE_RESPONSE_PROTOTYPE",
+  "date": "2026-11-10",
+  "credential_mode": "anonymous_browser",
+  "model_called": false,
+  "ok": true,
+  "video_id": "7699679130752748809",
+  "author_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+  "title": "轻信大学生保姆级旅游攻略，好好休假差点变成极限拉练 #搞笑 #动漫 #轻漫计划 #充能计划",
+  "media_candidates": 3,
+  "media_downloaded": true,
+  "media": {
+    "sha256": "da879319eb0d872b685f2945d1e8d9a93ee0fae75bc7fe4ff6d61e15def6546e",
+    "size_bytes": 28962553,
+    "duration_seconds": 150.165011,
+    "streams": [
+      "audio",
+      "video"
+    ]
+  }
+}

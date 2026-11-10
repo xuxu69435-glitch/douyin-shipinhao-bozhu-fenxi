@@ -3,6 +3,23 @@ import subprocess
 
 import pytest
 
+
+@pytest.mark.asyncio
+async def test_real_candidate_fallback_is_bounded_and_deduplicated(tmp_path):
+    from app.media import download_media_candidates, InvalidMedia
+    calls = []
+    async def download(url, destination):
+        calls.append(url)
+        if url == 'fixture-second':
+            return {'streams': ['audio', 'video']}
+        raise InvalidMedia('fixture-denied')
+    result = await download_media_candidates(['fixture-first','fixture-first','fixture-second'], tmp_path/'fixture.mp4', downloader=download)
+    assert result['streams'] == ['audio', 'video'] and calls == ['fixture-first','fixture-second']
+    calls.clear()
+    with pytest.raises(InvalidMedia):
+        await download_media_candidates(['a','b','c','d'], tmp_path/'fixture.mp4', downloader=download)
+    assert calls == ['a','b','c']
+
 from app.media import InvalidMedia, extract_audio, probe_media
 
 

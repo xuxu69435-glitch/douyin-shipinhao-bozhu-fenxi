@@ -29,5 +29,13 @@ try:
                   "Redistribution must satisfy the actual binary's LGPL/GPL terms, including corresponding source obligations."])
 except (OSError, subprocess.SubprocessError):
     parts.append("FFmpeg not found while generating this inventory.")
+browser_package = Path(__file__).resolve().parents[1] / "browser-helper/node_modules/playwright-core"
+if browser_package.is_dir():
+    import json
+    metadata = json.loads((browser_package / "package.json").read_text(encoding="utf8"))
+    parts.extend(["", f"playwright-core {metadata['version']} - Apache-2.0",
+                  "Source: https://github.com/microsoft/playwright",
+                  "Full LICENSE, NOTICE and ThirdPartyNotices.txt are bundled under browser-bridge/node_modules/playwright-core.",
+                  "Microsoft Edge is supplied by the user/Windows installation and is not redistributed in this installer."])
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text("\n".join(parts), encoding="utf8")

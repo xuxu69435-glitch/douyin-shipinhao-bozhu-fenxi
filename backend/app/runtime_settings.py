@@ -19,6 +19,7 @@ class RuntimeSettings(BaseModel):
     model_provider: Literal["api", "chatgpt"] = "api"
     CHATGPT_MODEL: str = Field(default="", max_length=200)
     enable_live: bool = False
+    collector_provider: Literal["f2", "browser"] = "f2"
     cookie_file: str = Field(default="", max_length=2048)
     whisper_model: str = Field(default="small", min_length=1, max_length=2048)
 

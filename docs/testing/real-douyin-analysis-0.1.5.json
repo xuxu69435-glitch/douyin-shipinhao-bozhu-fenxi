@@ -1,0 +1,23 @@
+{
+  "test_type": "REAL_DOUYIN_MEDIA_ASR_CHATGPT_ANALYSIS",
+  "date": "2026-11-10",
+  "status": "analyzed",
+  "platform_video_id": "7699679130752748809",
+  "asr_model": "small",
+  "asr_revision": "536b0662742c02347bc0e980a01041f333bce120",
+  "segment_count": 61,
+  "first_start_ms": 1550,
+  "last_end_ms": 150040,
+  "analysis_saved": true,
+  "model_provider": "official_chatgpt_plan",
+  "model": "gpt-6.1-sol",
+  "api_key_used": false,
+  "provenance": "real_model",
+  "elapsed_seconds": 90.88,
+  "transcript_version": "asr-6181a534a22a1d3a6e9af6d5",
+  "analysis_version": "llm-e4a99f56dcc3b30397256c46",
+  "evidence_revalidated": true,
+  "evidence_references": 36,
+  "srt_exported": true,
+  "vtt_exported": true
+}

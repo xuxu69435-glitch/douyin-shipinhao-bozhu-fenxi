@@ -75,6 +75,11 @@ export default function SettingsPage({ ready }: { ready: boolean }) {
         <details className="collector-settings"><summary>抖音采集设置 <span>{settings.enable_live ? '已启用' : '未启用'}</span></summary>
         <label className="checkbox"><input type="checkbox" checked={settings.enable_live} onChange={event => setSettings({ ...settings, enable_live: event.target.checked })}/>启用真实抖音采集</label>
         <p className="muted">默认关闭。仅在你确认有权访问样本并准备进行真实测试后开启；本地视频分析不需要开启此项。</p>
+        <label>采集方式 <select value={settings.collector_provider}
+          onChange={event => setSettings({ ...settings, collector_provider: event.target.value as 'f2' | 'browser' })}>
+          <option value="browser">浏览器采集（打开普通 Edge）</option>
+          <option value="f2">接口采集（兼容模式）</option>
+        </select><span>浏览器采集会打开独立窗口；需要登录或平台验证时，请自行操作。每次只处理所选的 10/30 条样本。</span></label>
         <DouyinSession/>
         <details className="cookie-help"><summary>已有 Cookie 文本文件？</summary>
         <label>抖音 Cookie 文件路径（可选）

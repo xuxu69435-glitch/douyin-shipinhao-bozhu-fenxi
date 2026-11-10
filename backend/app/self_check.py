@@ -119,6 +119,18 @@ def run_self_check():
             return {"node": process.stdout.decode("ascii").strip(), "fresh_account": "disconnected"}
         check("bundled_chatgpt_bridge", bridge)
 
+        def browser_bridge():
+            from .browser_collector import browser_bridge_files
+            from .chatgpt_plan import private_environment
+            node, script = browser_bridge_files()
+            process = subprocess.run([node, str(script)], input=b'{"op":"status"}', capture_output=True,
+                                     check=True, timeout=10, env=private_environment(), **subprocess_options())
+            result = json.loads(process.stdout)
+            if not result.get("ok"):
+                raise RuntimeError("browser_bridge_failed")
+            return {**result["result"], "browser_launched": False}
+        check("normal_browser_bridge", browser_bridge)
+
     report["offline_checks_passed"] = all(item["status"] == "passed" for item in report["checks"])
     return report
 

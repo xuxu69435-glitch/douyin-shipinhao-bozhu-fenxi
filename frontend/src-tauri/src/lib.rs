@@ -47,7 +47,8 @@ async fn backend_request(
     }
     let connection = state.connection.clone();
     let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(if path == "/api/settings/test" { 210 } else { 60 }))
+        .timeout(Duration::from_secs(if path == "/api/settings/test" { 210 }
+            else if path == "/api/diagnostics/douyin" { 150 } else { 60 }))
         .build()
         .map_err(|e| e.to_string())?;
     let url = format!("{}{}", connection.base_url, path);

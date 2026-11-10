@@ -24,9 +24,11 @@ try {
     $hostTriple = ($hostLine -replace '^host:\s*', '').Trim()
     $env:PYINSTALLER_CONFIG_DIR = Join-Path (Split-Path -Parent $projectRoot) '.task-cache\pyinstaller'
     & (Join-Path $PSScriptRoot 'build-chatgpt-bridge.ps1')
+    & (Join-Path $PSScriptRoot 'build-browser-bridge.ps1')
     $arguments = @('-m','PyInstaller','--noconfirm','--onedir','--clean',
         '--name','douyin-analyst-backend','--paths','backend',
         '--add-data',"$(Join-Path $projectRoot 'auth-helper\dist\runtime');chatgpt-bridge",
+        '--add-data',"$(Join-Path $projectRoot 'browser-helper\dist\runtime');browser-bridge",
         '--distpath','backend\dist','--workpath','backend\build',
         '--collect-all','f2','--collect-all','faster_whisper',
         '--collect-all','ctranslate2','--collect-all','tokenizers',

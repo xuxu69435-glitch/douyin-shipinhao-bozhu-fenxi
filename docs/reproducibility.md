@@ -6,6 +6,8 @@
 
 环境为 Windows x64，桌面需要 WebView2 Runtime；安装程序按 Tauri 配置检查该组件。当前本机验证 Windows 11，其他 Windows 安装环境仍需分别记录结果。
 
+0.1.5 的浏览器采集还需要本机安装普通 Microsoft Edge。Playwright 1.65.0 运行库随安装程序提供，Edge 由 Windows/使用者安装，应用不下载或重新分发 Edge，不需要用户另装 Node。设置中须明确选择“浏览器采集”；接口兼容模式保留原 F2 行为。
+
 1. 获取同一版本的 Windows 安装程序，按 `docs/testing/windows-installer-版本号.json` 的 SHA256 核对文件。安装到自己选择的目录。
 2. 应用内置 Python 后端、FFmpeg/FFprobe、语音运行库与 Node 登录桥接；最终用户无需另装 Python、Node、Rust 或 FFmpeg。Whisper 模型权重在首次使用时独立下载。
 3. 运行不读取已有设置的离线自检。下例路径换成自己的安装目录：
@@ -56,6 +58,10 @@ py -3.12 -m venv backend\.venv
 npm.cmd ci --prefix auth-helper --ignore-scripts --no-audit --no-fund
 npm.cmd run build --prefix auth-helper
 npm.cmd ci --prefix frontend --no-audit --no-fund
+Push-Location browser-helper
+npm.cmd ci --ignore-scripts --no-audit --no-fund
+npm.cmd test
+Pop-Location
 .\backend\.venv\Scripts\python.exe -m pytest backend\tests -q -o addopts=''
 npm.cmd test --prefix auth-helper
 npm.cmd run build --prefix frontend
@@ -63,6 +69,19 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build-desktop.ps
 ```
 
 FFmpeg 和 FFprobe 必须在构建机 PATH 中可用，打包脚本会将它们复制到安装资源。前端、登录桥接使用各自 package-lock.json；Rust 使用 Cargo.lock 和 `--locked`；Python 使用 requirements-windows.lock。构建脚本只复制生成运行库，不打包用户设置或模型缓存。
+
+浏览器桥接还使用 browser-helper/package-lock.json，固定 playwright-core 1.65.0（Apache-2.0）；完整 LICENSE、NOTICE 和 ThirdPartyNotices.txt 随运行资源保留。仅使用实际网页响应，不启用隐身补丁或占位安全签名。网页可能预加载更多条目，桥接只保留用户指定的 10/30 条；同一作品最多尝试 3 个实际返回的媒体地址。
+
+源码采集验收可以复用自己在软件中手动导入的加密状态，不加载任何模型配置：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\live_douyin_probe.py `
+  --collector browser --data-dir "$env:LOCALAPPDATA\com.douyinanalyst.desktop" `
+  --profile '你的主页或分享文本' --video '你的作品或分享文本' `
+  --output '.media\my-real-r0.json'
+```
+
+0.1.5 的离线自检增加浏览器桥接，为七项检查，记录 Edge 是否存在但不启动浏览器。既有 0.1.3 的六项自检记录保留其历史范围。
 
 构建后在另一个空目录运行自检，再按上表记录真实验收。`docs/testing` 中的历史记录均有各自样本类型和验收范围，不代表已经在所有机器上通过。
 

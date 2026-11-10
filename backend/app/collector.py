@@ -32,6 +32,7 @@ class VideoCandidate:
     published_at_unix: int | None
     source_url: str
     media_url: str | None
+    media_urls: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

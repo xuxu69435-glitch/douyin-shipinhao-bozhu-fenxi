@@ -191,6 +191,7 @@ export type RuntimeSettingsView = {
   model_provider: 'api' | 'chatgpt'; CHATGPT_MODEL: string;
   OPENAI_BASE_URL: string; OPENAI_MODEL: string; api_key_configured: boolean;
   api_key_encrypted: boolean; enable_live: boolean; cookie_file: string;
+  collector_provider: 'f2' | 'browser';
   whisper_model: string; data_dir: string;
 };
 

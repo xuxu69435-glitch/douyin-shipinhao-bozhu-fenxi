@@ -2,7 +2,23 @@
 
 Date: 2026-11-04. Research method: GitHub connector read of concrete source files, directory trees, issue #435, license files, repository HEADs; Douyin open platform and Tauri official docs. This is **source inspection**, not a claim that the remote projects were installed or executed locally.
 
-## Authenticated follow-up and normal page check — 2026-11-10
+## Adopted normal-browser adapter — 0.1.5, 2026-11-10
+
+The ordinary Edge prototype subsequently passed the original profile and video samples, including a real second page and playable downloads. It is now a selectable adapter; the earlier research-only/403 entries below describe the preceding attempts.
+
+| Item | Adopted version, source and evidence |
+| --- | --- |
+| Dependency | `playwright-core` **1.65.0**, exact version and integrity in `browser-helper/package-lock.json`; [upstream source](https://github.com/microsoft/playwright), [npm package](https://www.npmjs.com/package/playwright-core/v/1.65.0). |
+| License | Apache-2.0. The installed package's `LICENSE`, `NOTICE` and `ThirdPartyNotices.txt` are copied intact into the packaged `browser-bridge/node_modules/playwright-core` directory; `scripts/runtime_notices.py` lists the component. Microsoft Edge is installed separately, not redistributed. |
+| Reference files | Official Node [network events](https://playwright.dev/docs/network) and [Microsoft Edge channel](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge) documentation; package `index.mjs`, `types/types.d.ts` and bundled `lib/coreBundle.js` (this npm version bundles the runtime). Own implementation: `browser-helper/main.mjs`, `backend/app/browser_collector.py`, `scripts/build-browser-bridge.ps1`. No MediaCrawler source or stealth script copied. |
+| Actual capability | Launch ordinary visible `msedge`, load the canonical page, observe the site's successful detail/post responses and scroll the page for pagination. Retain only requested 10/30 samples and public creator/video fields. This does not synthesize signed API calls. Login or verification remains a user action. |
+| Dependencies | Bundled Node.js 22.20.0 shared with the existing login bridge, npm package 1.65.0, and locally installed Edge. No Python Playwright package, separate Chromium download, Redis, PostgreSQL or remote browser service. |
+| Test results | Four Node tests and 124 backend tests passed. Both source and packaged-backend real probes passed for the two original links: 2 profile pages, 30 unique works, 12 new works on page two; original and second-page media both pass FFprobe. See [source](../testing/browser-source-r0-0.1.5.json) and [packaged](../testing/browser-packaged-r0-0.1.5.json) reports. Original video also completed real ASR and model analysis; [separate report](../testing/real-douyin-analysis-0.1.5.json). |
+| Why adopted | The existing F2 transport is still denied by the gateway with user-imported cookies, whereas ordinary pages return usable public materials. A small browser bridge fits the single-worker desktop design and uses an existing permitted browser engine. F2 remains a separately recorded compatibility option. |
+
+The response may contain several actual media addresses. Real testing found a 403 from one CDN and success from another address of the same work. The downloader tries at most three returned, allowlisted addresses and validates each downloaded file; it does not invent URLs or ignore validation failures. Thirty collected works are not thirty analyzed works. This is a same-machine sample acceptance, not a promise that every creator, future platform version or another user's account will behave identically.
+
+## Earlier authenticated follow-up and normal page check — 2026-11-10
 
 Real probes with user-imported www.douyin.com cookies still receive HTTP 403. A bounded diagnostic classified the denial as a missing UIFID; supplying the actual imported UIFID changed it to a missing gateway signature. The adapter now forwards that real client identifier and exports only a fixed denial category. No response body or credential is retained in the record.
 

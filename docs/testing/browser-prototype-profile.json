@@ -1,0 +1,32 @@
+{
+  "record_scope": "Historical early prototype before the 10/30 retained-sample cap; not final 0.1.5 acceptance.",
+  "test_type": "REAL_EDGE_PAGE_RESPONSE_PROTOTYPE",
+  "date": "2026-11-10",
+  "credential_mode": "user_imported_cookie",
+  "model_called": false,
+  "ok": true,
+  "pages": 3,
+  "unique_works": 54,
+  "page2_new_ids": [
+    "7694238797025774902",
+    "7694559073127255336",
+    "7694622465695304975",
+    "7694991014838177087",
+    "7695625614744718628",
+    "7696036279863069993",
+    "7696346632220085558",
+    "7696720048529886502",
+    "7696836900987948351",
+    "7697096398998736168",
+    "7697205447341772070",
+    "7697209002274426146",
+    "7698214069345537343",
+    "7698214616941317385",
+    "7698570528449187110",
+    "7698946302482074914",
+    "7699330340518759718",
+    "7699679130752748809"
+  ],
+  "page2_confirmed": true,
+  "stop_reason": "limit_reached"
+}

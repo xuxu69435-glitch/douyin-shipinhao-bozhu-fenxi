@@ -1,0 +1,18 @@
+{
+  "version": "0.1.5",
+  "date": "2026-11-10",
+  "size_bytes": 305328079,
+  "sha256": "3692cad412fbc48565f99a0593e16eeed32fa413627352719419cfd6de2fb215",
+  "silent_install_exit_code": 0,
+  "previous_tasks_preserved": true,
+  "settings_preserved_during_install": true,
+  "chatgpt_authorization_preserved": true,
+  "cookie_state_preserved_during_install": true,
+  "installed_backend_matches_build": true,
+  "installed_desktop_matches_build_except_tauri_bundle_marker": true,
+  "desktop_bundle_marker": "NSS (NSIS), build directory restored to UNK after cargo check",
+  "desktop_differing_bytes": 3,
+  "selected_collector_after_verification": "browser",
+  "enabled_live_after_verification": true,
+  "existing_model_and_encrypted_key_preserved_after_selection": true
+}

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from .collector import AuthorWorks, F2Collector, VideoCandidate
 from .insights import OpenAICompatibleInsightGenerator
 from .links import ParsedLink, resolve_short_link
-from .media import download_verified_media, probe_media
+from .media import download_verified_media, download_media_candidates, probe_media
 from .models import TaskRecord, TaskVideoRecord, VideoRecord
 from .pipeline import analyze_media, sha256_file
 from .reporting import ReportNotReady, build_creator_report
@@ -177,7 +177,8 @@ class LiveTaskProcessor:
                 if not valid_existing:
                     if not candidate.media_url:
                         raise RuntimeError("作品详情没有获准下载的媒体地址")
-                    await self.downloader(candidate.media_url, destination)
+                    await download_media_candidates([candidate.media_url, *candidate.media_urls], destination,
+                                                    downloader=self.downloader, checkpoint=control.checkpoint)
                 await control.checkpoint()
                 self.stage(task_id, assoc_id, "transcribe_and_analyze", "running")
                 result = await analyze_media(
@@ -231,7 +232,12 @@ def build_opt_in_live_processor(factory: sessionmaker[Session], data_dir: Path, 
     generator = make_generator(configuration, data_dir)
     from .douyin_session import load_cookie
     cookie = load_cookie(data_dir, configuration.cookie_file)
+    if configuration.collector_provider == "browser":
+        from .browser_collector import BrowserCollector
+        collector = BrowserCollector(cookie)
+    else:
+        collector = F2Collector(cookie)
     return LiveTaskProcessor(
-        factory, data_dir, F2Collector(cookie), FasterWhisperTranscriber(configuration.whisper_model),
+        factory, data_dir, collector, FasterWhisperTranscriber(configuration.whisper_model),
         generator,
     )
