@@ -1,0 +1,20 @@
+{
+  "test_type": "INDEPENDENT_CHECKOUT_SOURCE_VERIFICATION",
+  "date": "2026-11-10",
+  "version": "0.1.5",
+  "commit": "60a4af9647a9145c3a036100a84e769d34800101",
+  "same_windows_machine": true,
+  "previously_created_independent_locked_python_environment_reused": true,
+  "editable_package_updated_to": "0.1.5",
+  "frontend_npm_ci": "passed",
+  "frontend_build": "passed",
+  "browser_helper_fresh_npm_ci": "passed",
+  "playwright_core": "1.65.0",
+  "browser_tests_passed": 4,
+  "backend_tests_passed": 124,
+  "backend_test_exit_code": 0,
+  "clean_data_self_check_passed": true,
+  "real_accounts_loaded": false,
+  "real_model_called": false,
+  "full_nsis_rebuilt_in_this_checkout": false
+}

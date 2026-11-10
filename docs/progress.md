@@ -11,6 +11,7 @@
 - 原作品真实 Whisper small CPU 转写与已授权 ChatGPT 套餐模型分析完成，61 段字幕、36 处证据引用重验通过，SRT/VTT 导出成功；未使用 API Key。见 testing/real-douyin-analysis-0.1.5.json。尚未用 10/30 条视频完成整批 ASR、模型分析和人工质量验收。
 - 后端正常桌面权限下 124 项测试通过，浏览器桥接 4 项测试通过。首次受限环境中的进程清理测试未能使用 taskkill；正常桌面权限复验通过，没有删除退出保护。前端、cargo check、Rust release、PyInstaller 和 NSIS 构建完成；打包及安装空配置七项检查、发行及安装桌面各两次生命周期检查通过。
 - 0.1.5 覆盖安装退出码 0；原 3 条任务、模型设置、Cookie 和授权保留，后端与构建一致。桌面仅相差 Tauri 安装类型标记的 3 字节，规范化后一致。保留校验之后按本机选择启用浏览器采集，其他模型字段及密钥密文保持一致。详见 testing/windows-update-0.1.5.md 和 testing/windows-installer-0.1.5.json。
+- 已将现有独立检出更新到 60a4af9；独立 Python 环境更新 editable 包，前端及浏览器依赖重新 npm ci。124 项后端、4 项浏览器、前端构建和七项空配置检查通过，见 testing/fresh-checkout-source-0.1.5.json。此次未在该目录重建完整 NSIS，不等同于另一台机器验收。
 
 ## 0.1.4 浏览器 Cookie 兼容及网关定位（2026-11-10）
 

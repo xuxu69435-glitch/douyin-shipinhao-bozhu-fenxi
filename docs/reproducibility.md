@@ -87,6 +87,8 @@ FFmpeg 和 FFprobe 必须在构建机 PATH 中可用，打包脚本会将它们�
 
 ## 已执行的独立检查
 
+0.1.5：上述独立检出更新至 `60a4af9647a9145c3a036100a84e769d34800101`，沿用此前按锁文件创建的独立 Python 环境并重新安装当前 editable 包。浏览器桥接和前端分别执行全新 `npm ci`，浏览器 4 项测试、后端 124 项测试、前端构建和七项空配置自检通过，见 [源码复验](testing/fresh-checkout-source-0.1.5.json) 与 [空配置记录](testing/fresh-checkout-clean-data-0.1.5.json)。本次没有在该目录重新构建完整 NSIS，也没有加载已有账号或调用模型。
+
 在同一 Windows 机器的新检出目录、独立 Python 虚拟环境、全新 npm 依赖中，按锁文件安装 81 项 Python 依赖。最初检出 `74a79f8` 完成 104 项后端测试、官方登录 SDK 的 56 项测试（1 项 Unix 权限测试跳过）、前端构建及空配置六项自检；更新至 Cookie 解析修复 `11ffb42` 后，111 项后端测试、前端构建及六项自检通过，见 [空配置结果](testing/fresh-checkout-clean-data-0.1.3.json)。不能将同机新环境检查等同于另一台机器验收。
 
 最终安装版在仅含 Windows System32 的 PATH 下六项自检通过，见 [安装版结果](testing/installed-clean-data-0.1.3.json)。这能检查安装资源是否自包含；抖音访问和真实模型仍须每个人独立接入后验证。

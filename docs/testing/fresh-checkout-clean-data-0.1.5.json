@@ -1,0 +1,81 @@
+{
+  "test_type": "CLEAN_DATA_OFFLINE_INSTALLATION_CHECK",
+  "version": "0.1.5",
+  "platform": "Windows",
+  "architecture": "AMD64",
+  "python": "3.12.2",
+  "used_existing_settings": false,
+  "real_douyin_tested": false,
+  "real_model_tested": false,
+  "checks": [
+    {
+      "name": "runtime_packages",
+      "status": "passed",
+      "details": {
+        "fastapi": "0.162.0",
+        "sqlalchemy": "2.1.8",
+        "f2": "0.0.1.7",
+        "faster-whisper": "1.2.1",
+        "av": "18.1.0",
+        "ctranslate2": "4.8.5",
+        "onnxruntime": "1.31.1"
+      }
+    },
+    {
+      "name": "bundled_media_tools",
+      "status": "passed",
+      "details": {
+        "ffmpeg": "ffmpeg version 8.0-full_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers",
+        "ffprobe": "ffprobe version 8.0-full_build-www.gyan.dev Copyright (c) 2007-2025 the FFmpeg developers",
+        "synthetic_streams": [
+          "audio",
+          "video"
+        ]
+      }
+    },
+    {
+      "name": "real_audio_decode_without_weights",
+      "status": "passed",
+      "details": {
+        "samples": 16000,
+        "weights_loaded": false,
+        "ctranslate2": "4.8.5",
+        "onnxruntime": "1.31.1"
+      }
+    },
+    {
+      "name": "sqlite_persistence",
+      "status": "passed",
+      "details": {
+        "fresh_database": true,
+        "persisted_after_reopen": true
+      }
+    },
+    {
+      "name": "credential_encryption",
+      "status": "passed",
+      "details": {
+        "provider": "windows_dpapi",
+        "synthetic_only": true
+      }
+    },
+    {
+      "name": "bundled_chatgpt_bridge",
+      "status": "passed",
+      "details": {
+        "node": "v22.20.0",
+        "fresh_account": "disconnected"
+      }
+    },
+    {
+      "name": "normal_browser_bridge",
+      "status": "passed",
+      "details": {
+        "playwright": "1.65.0",
+        "edge_available": true,
+        "browser_launched": false
+      }
+    }
+  ],
+  "offline_checks_passed": true
+}

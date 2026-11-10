@@ -11,6 +11,7 @@
 | 原主页 | 2 页、30 条去重作品，第二页新增 12 条；第二页样本下载 56699567 字节、258.972 秒并通过 FFprobe。见 [源码实测](browser-source-r0-0.1.5.json)、[打包实测](browser-packaged-r0-0.1.5.json)。 |
 | 真实分析 | 原作品 Whisper small CPU 产生 61 段字幕；已授权套餐模型完成真实分析，36 处字幕引用重验通过，SRT/VTT 导出成功。该次未使用 API Key；见 [分析记录](real-douyin-analysis-0.1.5.json)。 |
 | 空配置运行 | 打包及安装后端七项自检通过，包括 Node 与 Playwright 1.65.0 组件加载、检测到本机 Edge。该自检不启动浏览器、不联网、不读用户设置；见 [安装自检](installed-clean-data-0.1.5.json)。 |
+| 独立源码环境 | 独立检出更新到 60a4af9，沿用此前独立锁定 Python 环境；前端和浏览器依赖重新 npm ci。124 项后端、4 项浏览器、前端构建与七项空配置检查通过；见 [复验记录](fresh-checkout-source-0.1.5.json)。仍为同机，没有在该目录重建完整 NSIS。 |
 | 后端与桌面生命周期 | 发行版及安装版隔离检查覆盖认证、媒体 Range、历史重启及进程退出。见 [发行桌面](release-desktop-0.1.5-smoke.json)、[安装桌面](installed-desktop-0.1.5-smoke.json)、[安装后端](installed-backend-0.1.5-smoke.json)。合成媒体检查不代表 WebView 实际播放。 |
 | 覆盖安装 | 退出码 0，原 3 条任务、模型设置、套餐授权及 Cookie 均保留；后端与打包文件一致。Tauri 桌面仅相差安装类型标记的 3 字节：安装版 NSS，随后 cargo check 将构建目录标记恢复为 UNK。规范化该标记后文件一致，详见 [安装清单](windows-installer-0.1.5.json)。 |
 
