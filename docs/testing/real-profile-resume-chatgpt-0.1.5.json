@@ -1,0 +1,30 @@
+{
+  "test_type": "REAL_PROFILE_PAUSE_RESUME_AND_EXPORT_CHECK",
+  "date": "2026-11-10",
+  "status": "passed",
+  "requested_limit": 10,
+  "pause_reached": true,
+  "task_id_preserved": true,
+  "persisted_analyses_reused": 2,
+  "model_runs_for_each_reused_video": [
+    1,
+    1
+  ],
+  "total_model_requests": 10,
+  "provider": "chatgpt_plan",
+  "original_model_settings_unchanged": true,
+  "api_key_used": false,
+  "all_ten_media_reprobed": true,
+  "all_last_subtitle_end_within_media_plus_1s": true,
+  "total_media_duration_seconds": 1594.488,
+  "srt_exports": 10,
+  "vtt_exports": 10,
+  "report_json_and_markdown_exported": true,
+  "report_sample_counts_verified": true,
+  "program_domain_counts_sum_to_effective_videos": true,
+  "business_not_inferred": true,
+  "unverified_preferences_not_promoted_to_creator": true,
+  "human_semantic_quality_accepted": false,
+  "tauri_webview_playback_tested": false,
+  "thirty_video_batch_tested": false
+}

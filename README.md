@@ -2,7 +2,7 @@
 
 Windows 本地桌面应用：Tauri 2 + React + Python 3.12 / FastAPI + SQLite，支持任务管理、本地视频分析、可选抖音采集、字幕与证据定位、博主报告导出。
 
-当前已有 Windows 安装版。0.1.5 的普通 Edge 浏览器通道已用指定主页和作品完成作者、第二页和真实媒体验证；该作品的真实 Whisper 转写与官方 ChatGPT 套餐分析已通过。覆盖范围及安装结果以 docs/testing 的记录为准，批量分析质量仍需人工验收。当前采用固定流程与轻量 harness，LangGraph 审查 Agent 暂缓实现。
+当前已有 Windows 安装版。0.1.5 的普通 Edge 浏览器通道已用指定主页和作品完成作者、第二页和真实媒体验证；原作品及 10 条主页样本已完成真实 Whisper 转写与官方 ChatGPT 套餐分析，暂停恢复和导出验证通过。10 条验收走源码 Worker；30 条整批、分类归并质量和人工效果仍待验证。覆盖范围及安装结果以 docs/testing 的记录为准。当前采用固定流程与轻量 harness，LangGraph 审查 Agent 暂缓实现。
 
 ## 开始使用
 

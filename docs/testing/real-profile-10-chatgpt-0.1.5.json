@@ -1,0 +1,129 @@
+{
+  "test_type": "REAL_DOUYIN_PROFILE_CHATGPT_ANALYSIS",
+  "task_id": "0a30745c-fa68-40cd-b819-55fcb6d08240",
+  "model_provider": "official_chatgpt_plan",
+  "model": "gpt-6.1-sol",
+  "api_key_loaded": false,
+  "api_key_used": false,
+  "requested_limit": 10,
+  "status": "completed",
+  "success_count": 10,
+  "failure_count": 0,
+  "no_speech_count": 0,
+  "stop_reason": "limit_reached",
+  "error_code": null,
+  "report_saved": true,
+  "report_version": "report-580a652dc88f779039bf48d8",
+  "evidence_revalidated": true,
+  "segment_count": 580,
+  "evidence_references": 351,
+  "model_requests": 10,
+  "analysis_run_states": [
+    "completed",
+    "completed",
+    "completed",
+    "completed",
+    "completed",
+    "completed",
+    "completed",
+    "completed",
+    "completed",
+    "completed"
+  ],
+  "analysis_run_providers": [
+    "chatgpt_plan"
+  ],
+  "elapsed_seconds": 494.3,
+  "videos": [
+    {
+      "platform_video_id": "7706050085754277174",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 45,
+      "evidence_references": 34,
+      "transcript_version": "asr-4474285803dad5d12434fa46",
+      "analysis_version": "llm-09cf133ce955f6318457fc60"
+    },
+    {
+      "platform_video_id": "7705042536431095091",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 51,
+      "evidence_references": 42,
+      "transcript_version": "asr-ddbb7cf73162092cf473dfec",
+      "analysis_version": "llm-4a3744496cfb945da33c3f29"
+    },
+    {
+      "platform_video_id": "7705042261167328550",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 72,
+      "evidence_references": 41,
+      "transcript_version": "asr-c30a1f5874618046c36341b4",
+      "analysis_version": "llm-9a863f331847e2f9f723682b"
+    },
+    {
+      "platform_video_id": "7704894483195907369",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 64,
+      "evidence_references": 21,
+      "transcript_version": "asr-6e4678a37736739e66512b03",
+      "analysis_version": "llm-a5c084d513dd43856bcdd580"
+    },
+    {
+      "platform_video_id": "7703418355528633619",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 53,
+      "evidence_references": 34,
+      "transcript_version": "asr-c24381182de524ff528dd47f",
+      "analysis_version": "llm-59ed71ce487042202df169e8"
+    },
+    {
+      "platform_video_id": "7704521581887802664",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 67,
+      "evidence_references": 34,
+      "transcript_version": "asr-a0b979d4ed4400fe687feb07",
+      "analysis_version": "llm-09c1d7ffab4d79697fcd5a0a"
+    },
+    {
+      "platform_video_id": "7704162834799775017",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 61,
+      "evidence_references": 44,
+      "transcript_version": "asr-c3b004e67a86eb2f79911174",
+      "analysis_version": "llm-051b4b5e8d6e12a454e9f9e7"
+    },
+    {
+      "platform_video_id": "7703767563003563304",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 48,
+      "evidence_references": 28,
+      "transcript_version": "asr-e416f8f8bcbb183f1534a288",
+      "analysis_version": "llm-271098f7bfd6ccc5cf3dd1c9"
+    },
+    {
+      "platform_video_id": "7703417145912249610",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 50,
+      "evidence_references": 37,
+      "transcript_version": "asr-193f0c35c52faae55d0527a7",
+      "analysis_version": "llm-be8a64a77470cd9e6d8d0d98"
+    },
+    {
+      "platform_video_id": "7702444929120832783",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 69,
+      "evidence_references": 36,
+      "transcript_version": "asr-078b839cfeaf97359be76486",
+      "analysis_version": "llm-66bb77cb29872b4da772f268"
+    }
+  ]
+}

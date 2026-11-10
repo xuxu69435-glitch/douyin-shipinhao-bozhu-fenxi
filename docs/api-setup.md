@@ -65,3 +65,19 @@ $env:OPENAI_API_KEY = '仅在本机填入密钥'
 已保存的本机设置优先于环境变量；命令行默认与桌面使用同一数据目录，也可传入 `--data-dir` 指定独立测试目录。不要把实际环境变量或配置文件提交到 Git。
 
 真实 R0 采集探针仍为 `scripts/live_douyin_probe.py`，其主页、作品链接、Cookie 文件和媒体目录参数见 README 与调研记录。
+
+## 用已授权 ChatGPT 模型验收博主批量分析
+
+软件保留 **模型接入方式** 与 **账户可用模型** 配置。后续分析使用保存的所选通道；套餐授权不是通用 API Key。官方授权通道向公开 Responses 接口发送文本请求，使用 `store:false`、`stream:true`，收到完整完成事件后才接受结果，参见 [OpenAI Docs：模型与推理](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)。
+
+已在软件选择并授权 ChatGPT 套餐、保存浏览器采集及 Whisper 配置后，可执行独立的真实批量验收：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\analyze_douyin_profile.py `
+  '你的抖音主页或主页分享文本' --max-videos 10 `
+  --data-dir '.media\my-profile-test' --output '.media\my-profile-test\acceptance.json'
+```
+
+此入口仅使用保存的 ChatGPT 套餐模型，不加载 API Key。默认从本机软件配置目录读取手动导入的抖音登录状态、模型选择和独立 ChatGPT 授权；不会将凭据复制到验收目录。可用 `--config-dir` 指定自己的配置位置。`--data-dir` 必须与配置目录不同，测试任务、媒体、字幕及报告独立保存；不要与正在使用该验收目录的另一个进程同时运行。
+
+选择 30 条时改为 `--max-videos 30`。真实分析会消耗授权账户的套餐用量。中断、失败或暂停后，使用相同主页、数量和目录并添加 `--resume-task 验收记录中的任务ID`；已成功阶段按现有版本规则复用。任务完成后，`exports` 内包含 Markdown/JSON 博主报告和每条有效视频的 SRT/VTT；`--output` 只保存不含凭据的验收指标，不包含完整报告或字幕。

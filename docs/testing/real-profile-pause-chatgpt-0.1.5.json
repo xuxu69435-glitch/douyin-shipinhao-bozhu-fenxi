@@ -1,0 +1,41 @@
+{
+  "test_type": "REAL_DOUYIN_PROFILE_CHATGPT_ANALYSIS",
+  "task_id": "0a30745c-fa68-40cd-b819-55fcb6d08240",
+  "model_provider": "official_chatgpt_plan",
+  "model": "gpt-6.1-sol",
+  "api_key_loaded": false,
+  "requested_limit": 10,
+  "status": "paused",
+  "success_count": 1,
+  "failure_count": 0,
+  "no_speech_count": 0,
+  "stop_reason": "user_paused",
+  "error_code": null,
+  "report_saved": false,
+  "report_version": null,
+  "evidence_revalidated": true,
+  "segment_count": 45,
+  "evidence_references": 34,
+  "model_requests": 2,
+  "analysis_run_states": [
+    "completed",
+    "completed"
+  ],
+  "elapsed_seconds": 187.56,
+  "videos": [
+    {
+      "platform_video_id": "7706050085754277174",
+      "status": "completed",
+      "error_code": null,
+      "segment_count": 45,
+      "evidence_references": 34,
+      "transcript_version": "asr-4474285803dad5d12434fa46",
+      "analysis_version": "llm-09cf133ce955f6318457fc60"
+    },
+    {
+      "platform_video_id": "7705042536431095091",
+      "status": "running",
+      "error_code": null
+    }
+  ]
+}

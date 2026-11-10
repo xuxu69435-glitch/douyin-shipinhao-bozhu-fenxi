@@ -7,7 +7,7 @@
 - 仅开发抖音，不开发微信视频号。
 - Windows / Python 3.12.2 后端 124 项测试通过；浏览器桥接 4 项测试通过。前端、Rust、Sidecar 及 NSIS 已构建，安装及生命周期结果以 docs/testing 为准。
 - 0.1.5 的普通 Edge + Playwright 通道已对指定主页和作品完成源码及打包后端的作者、第二页和真实媒体验收；30 条去重作品、第二页新增 12 条。F2 兼容通道仍为 403，分别记录。
-- 已完成原真实抖音作品的 Whisper 转写、套餐模型分析和证据重验。真实视频人工质量、WebView 实际播放及 10/30 条全批分析仍待验证，不能把采集30条等同于分析30条。
+- 已完成原真实抖音作品及 10 条主页样本的 Whisper 转写、套餐模型分析、证据重验、真实暂停恢复与导出。10 条验收使用源码 SingleWorker，未走 Tauri 界面；30 条全批、人工质量和 WebView 实际播放仍待验证，不能把采集30条等同于分析30条。同义领域/主题归并仍不充分，统计正确不代表分类质量通过。
 - LangGraph Agent 暂缓实现，当前采用固定流程与轻量 harness，见 harness-decision.md。不要擅自加入自主工具循环或多 Agent。
 - 模型入口为“模型与采集设置”：API Key 使用 OPENAI_BASE_URL、OPENAI_API_KEY、OPENAI_MODEL；ChatGPT 套餐使用官方独立授权与 CHATGPT_MODEL，禁止隐式回退至 API Key。Windows 凭据用 DPAPI，API 不回显令牌或密钥。真实采集默认关闭，独立采集检测不得加载模型凭据。
 - 支持手动粘贴 Cookie 并用 DPAPI 加密保存；获取与导入说明见 docs/douyin-cookie.md。独立复现说明及 --self-check 入口见 docs/reproducibility.md。默认 small 权重固定 revision；凭据不得进入日志、请求参数或测试记录。

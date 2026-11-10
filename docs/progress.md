@@ -8,7 +8,11 @@
 - 设置可选择浏览器采集或 F2 兼容模式，任务和独立检测使用同一适配器。浏览器采集最多等待 90 秒并自动关闭；中断清理覆盖合成子进程测试，Windows 桌面退出仍保留 Job 进程树保护。诊断 IPC 超时调整到 150 秒。
 - 控制保留样本为 10/30 条，忽略超过范围的网页预加载；程序检查作者、分页游标、作品 ID 和去重。实测某个 CDN 返回 403 而同作品另一地址正常，新增最多 3 个真实媒体候选的有限回退。
 - 两条原分享链接在源码及打包后端的浏览器通道均完成采集验收：主页 2 页、30 条去重作品、第二页新增 12 条；原作品 150.165 秒、28962553 字节，第二页样本 258.972 秒、56699567 字节，均含音视频流并通过 FFprobe。见 testing/browser-source-r0-0.1.5.json、testing/browser-packaged-r0-0.1.5.json。
-- 原作品真实 Whisper small CPU 转写与已授权 ChatGPT 套餐模型分析完成，61 段字幕、36 处证据引用重验通过，SRT/VTT 导出成功；未使用 API Key。见 testing/real-douyin-analysis-0.1.5.json。尚未用 10/30 条视频完成整批 ASR、模型分析和人工质量验收。
+- 原作品真实 Whisper small CPU 转写与已授权 ChatGPT 套餐模型分析完成，61 段字幕、36 处证据引用重验通过，SRT/VTT 导出成功；未使用 API Key。见 testing/real-douyin-analysis-0.1.5.json。
+- 后续 10 条主页真实样本经源码 SingleWorker 完成整批处理，10 成功、0 失败、0 无语音；总媒体 1594.488 秒，580 段字幕、351 处单视频引用重验通过，Markdown/JSON 博主报告及 10 份 SRT、10 份 VTT 导出成功。模型均为保存的 ChatGPT 套餐 gpt-6.1-sol，共 10 次真实请求，未加载或使用 API Key。见 testing/real-profile-10-chatgpt-0.1.5.json。
+- 实测暂停后两条已落库分析在恢复时复用，原字幕/分析版本保持一致，各仍只有一次模型请求。报告样本和领域计数复核通过，10 份媒体复检、字幕末尾与时长检查通过，原模型设置校验保持一致。见 testing/real-profile-pause-chatgpt-0.1.5.json、testing/real-profile-resume-chatgpt-0.1.5.json。上述为自动链路验收，不代表人工质量或 Tauri 内实际播放通过。
+- 新增 scripts/analyze_douyin_profile.py 真实验收入口，固定使用配置的 ChatGPT 套餐通道，独立数据目录，可恢复暂停/失败任务；不复制授权、不读取 API Key。语法、帮助入口及合成 API 模式拒绝检查通过。现有桌面配置入口保留，后端与桌面运行代码未在此后续验收中变更。
+- 实际报告仍将“娱乐”和“剧情娱乐”等相近领域分列，同义主题归并不充分；计数正确不代表分类体系稳定，后续需改进并人工复核。30 条整批分析及人工质量验收尚未完成。
 - 后端正常桌面权限下 124 项测试通过，浏览器桥接 4 项测试通过。首次受限环境中的进程清理测试未能使用 taskkill；正常桌面权限复验通过，没有删除退出保护。前端、cargo check、Rust release、PyInstaller 和 NSIS 构建完成；打包及安装空配置七项检查、发行及安装桌面各两次生命周期检查通过。
 - 0.1.5 覆盖安装退出码 0；原 3 条任务、模型设置、Cookie 和授权保留，后端与构建一致。桌面仅相差 Tauri 安装类型标记的 3 字节，规范化后一致。保留校验之后按本机选择启用浏览器采集，其他模型字段及密钥密文保持一致。详见 testing/windows-update-0.1.5.md 和 testing/windows-installer-0.1.5.json。
 - 已将现有独立检出更新到 60a4af9；独立 Python 环境更新 editable 包，前端及浏览器依赖重新 npm ci。124 项后端、4 项浏览器、前端构建和七项空配置检查通过，见 testing/fresh-checkout-source-0.1.5.json。此次未在该目录重建完整 NSIS，不等同于另一台机器验收。
