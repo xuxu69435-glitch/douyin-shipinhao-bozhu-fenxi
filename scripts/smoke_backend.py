@@ -75,10 +75,10 @@ def run():
             base = f"http://127.0.0.1:{port}/api"
             assert httpx.get(f"{base}/tasks", timeout=3).status_code == 401
             headers = {"X-Analyst-Token": token}
-            fixture_cookie = 'prefs={"volume":0.5}; theme=dark; theme=light; sessionid=fixture-cookie-secret'
+            fixture_cookie = 'prefs={"volume":0.5}; theme=dark; theme=light; unnamed-fixture; sessionid=fixture-cookie-secret'
             session = httpx.post(f"{base}/douyin/session", headers=headers,
                                  json={"cookie": fixture_cookie}, timeout=5)
-            assert session.status_code == 200 and session.json()["cookie_count"] == 4, session.status_code
+            assert session.status_code == 200 and session.json()["cookie_count"] == 5, session.status_code
             assert session.json()["login_marker_present"]
             assert "fixture-cookie-secret" not in session.text
             assert "fixture-cookie-secret" not in (Path(data_dir) / "douyin-session.json").read_text()
@@ -134,7 +134,7 @@ def run():
             settings = httpx.get(f"{base}/settings", headers=headers, timeout=3)
             assert settings.json()["api_key_configured"] and settings.json()["OPENAI_MODEL"] == "fixture-model"
             session = httpx.get(f"{base}/douyin/session", headers=headers, timeout=3)
-            assert session.json()["configured"] and session.json()["cookie_count"] == 4
+            assert session.json()["configured"] and session.json()["cookie_count"] == 5
             assert "fixture-cookie-secret" not in session.text
             cleared = httpx.post(f"{base}/douyin/session/clear", headers=headers, timeout=3)
             assert cleared.status_code == 200 and not cleared.json()["configured"]

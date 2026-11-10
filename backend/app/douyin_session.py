@@ -12,6 +12,7 @@ from .runtime_settings import _crypt_key
 MAX_COOKIE_BYTES = 65_536
 SESSION_FILENAME = "douyin-session.json"
 COOKIE_NAME = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
+RESPONSE_ATTRIBUTES = {"httponly", "secure", "partitioned"}
 
 
 class DouyinSessionError(ValueError):
@@ -31,6 +32,7 @@ def normalize_cookie(text: str) -> str:
     if text.startswith(("{", "[", "curl ", "#")):
         raise DouyinSessionError("请粘贴 Cookie 请求头的值，不要粘贴 JSON、导出表格或整段 cURL")
     parts = []
+    named_pairs = 0
     # Forward the browser's request header without interpreting opaque values.
     # SimpleCookie can silently drop JSON-like values and duplicate-name entries.
     for index, part in enumerate(text.split(";"), 1):
@@ -38,19 +40,23 @@ def normalize_cookie(text: str) -> str:
         if not part:
             continue
         name, separator, _ = part.partition("=")
-        if not separator or not COOKIE_NAME.fullmatch(name):
+        if not COOKIE_NAME.fullmatch(name) or (not separator and name.lower() in RESPONSE_ATTRIBUTES):
             raise DouyinSessionError(
-                f"Cookie 第 {index} 项缺少有效的名称=值；请复制 Request Headers 中 Cookie 的完整值，"
+                f"Cookie 第 {index} 项格式无法识别；请复制 Request Headers 中 Cookie 的完整值，"
                 "不要复制 Cookies 表格或 Set-Cookie")
+        # A browser can serialize a nameless cookie as its value alone. Preserve
+        # that token; do not turn it into a named cookie by adding '='.
+        named_pairs += bool(separator)
         parts.append(part)
-    if not parts:
+    if not parts or not named_pairs:
         raise DouyinSessionError("Cookie 应为 name=value; name2=value2 格式")
     return "; ".join(parts)
 
 
 def cookie_metadata(cookie: str):
-    names = [part.partition("=")[0] for part in normalize_cookie(cookie).split("; ")]
-    return {"cookie_count": len(names),
+    parts = normalize_cookie(cookie).split("; ")
+    names = [part.partition("=")[0] for part in parts if "=" in part]
+    return {"cookie_count": len(parts),
             "login_marker_present": any(name in names for name in ("sessionid", "sessionid_ss", "sid_tt"))}
 
 

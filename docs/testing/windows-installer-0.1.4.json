@@ -1,0 +1,15 @@
+{
+  "version": "0.1.4",
+  "date": "2026-11-10",
+  "size_bytes": 302168570,
+  "sha256": "e2c549139daf56f64fe5427528ddbcf5cbc24a9d13e39372de3ff6bf5465c224",
+  "silent_install_exit_code": 0,
+  "previous_tasks_preserved": true,
+  "settings_preserved": true,
+  "chatgpt_authorization_preserved": true,
+  "cookie_state_preserved_during_install": true,
+  "installed_backend_matches_build": true,
+  "real_cookie_imported_after_update": true,
+  "real_cookie_encryption_roundtrip": true,
+  "temporary_cookie_file_removed": true
+}

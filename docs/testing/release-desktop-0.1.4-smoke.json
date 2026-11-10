@@ -1,0 +1,55 @@
+{
+  "type": "WINDOWS_DESKTOP_LIFECYCLE_SMOKE",
+  "tauri_process_lifecycle_tested": true,
+  "persisted_history_after_restart": true,
+  "runs": [
+    {
+      "asr_native_libraries_imported": true,
+      "authenticated_proxy": true,
+      "backend_pid": 46008,
+      "blocked_sample": true,
+      "bundled_ffmpeg": true,
+      "bundled_ffprobe": true,
+      "douyin_live_tested": false,
+      "invalid_proxy_path_rejected": true,
+      "ok": true,
+      "packages": {
+        "f2": "0.0.1.7",
+        "faster-whisper": "1.2.1"
+      },
+      "previous_task_count": 18,
+      "real_asr_llm_tested": false,
+      "settings_key_not_exposed": true,
+      "sidecar_pid": 46008,
+      "synthetic_media_range": true,
+      "type": "OFFLINE_TAURI_SIDECAR_SMOKE",
+      "webview_playback_tested": false,
+      "weights_loaded": false,
+      "process_tree_terminated": true
+    },
+    {
+      "asr_native_libraries_imported": true,
+      "authenticated_proxy": true,
+      "backend_pid": 50592,
+      "blocked_sample": true,
+      "bundled_ffmpeg": true,
+      "bundled_ffprobe": true,
+      "douyin_live_tested": false,
+      "invalid_proxy_path_rejected": true,
+      "ok": true,
+      "packages": {
+        "f2": "0.0.1.7",
+        "faster-whisper": "1.2.1"
+      },
+      "previous_task_count": 19,
+      "real_asr_llm_tested": false,
+      "settings_key_not_exposed": true,
+      "sidecar_pid": 50592,
+      "synthetic_media_range": true,
+      "type": "OFFLINE_TAURI_SIDECAR_SMOKE",
+      "webview_playback_tested": false,
+      "weights_loaded": false,
+      "process_tree_terminated": true
+    }
+  ]
+}

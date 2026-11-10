@@ -1,0 +1,85 @@
+{
+  "context": {
+    "date": "2026-11-10",
+    "cookie_source_host_reported_by_user": "www.douyin.com",
+    "cookie_values_recorded": false,
+    "model_called": false,
+    "build_version": "0.1.4"
+  },
+  "profile": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "blocked",
+        "message": "主页地址已解析，但尚未从真实作品验证作者归属"
+      },
+      {
+        "name": "works",
+        "status": "blocked",
+        "message": "平台要求网页生成的安全签名，当前采集接口尚未通过；保存 Cookie 不代表该签名已具备"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "media",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/user/MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "source_kind": "profile",
+    "platform_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "access_mode": "user_imported_cookie",
+    "access_denied_reason": "gateway_signature_missing",
+    "error_code": "HTTP_403"
+  },
+  "video": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "blocked",
+        "message": "平台要求网页生成的安全签名，当前采集接口尚未通过；保存 Cookie 不代表该签名已具备"
+      },
+      {
+        "name": "works",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "media",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/video/7699679130752748809",
+    "source_kind": "video",
+    "platform_id": "7699679130752748809",
+    "access_mode": "user_imported_cookie",
+    "access_denied_reason": "gateway_signature_missing",
+    "error_code": "HTTP_403"
+  }
+}

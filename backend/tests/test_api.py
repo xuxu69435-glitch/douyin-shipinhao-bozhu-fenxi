@@ -25,7 +25,7 @@ def wait_for(client, auth, task_id, expected="blocked"):
 def test_auth_health(client, auth):
     assert client.get("/api/health").status_code == 401
     assert client.get("/api/health", headers={"X-Analyst-Token": "bad"}).status_code == 401
-    assert client.get("/api/health", headers=auth).json() == {"status": "ok", "stage": "M0", "version": "0.1.3"}
+    assert client.get("/api/health", headers=auth).json() == {"status": "ok", "stage": "M0", "version": "0.1.4"}
 
 
 def test_task_persists_and_truthfully_blocks(client, auth):

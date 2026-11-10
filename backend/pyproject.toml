@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "douyin-analyst-backend"
-version = "0.1.3"
+version = "0.1.4"
 description = "Local evidence-oriented Douyin creator analysis backend"
 requires-python = ">=3.12,<3.14"
 dependencies = [

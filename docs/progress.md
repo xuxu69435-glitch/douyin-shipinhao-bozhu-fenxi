@@ -2,6 +2,17 @@
 
 范围：仅抖音，Windows本地Tauri 2桌面应用。**“代码已实现”≠“真实抖音通过”≠“Windows安装包通过”。**
 
+## 0.1.4 浏览器 Cookie 兼容及网关定位（2026-11-10）
+
+- 根据本机实际输入的去敏结构定位第 51 项为无名称 Cookie。保留其原始单行形式，不添加等号、不丢字段；无名称值不计为登录标记。合成回归、API 加密保存和重启检查覆盖该情形，不将真实凭据写入测试。
+- 只从手动导入状态提取真实 UIFID，补齐客户端标识；在 403 中仅识别固定网关分类，响应原文、凭据和签名地址不入报告。独立检测可明确提示缺少网页安全签名，不继续把该情形统一归因于 Cookie。
+- 后端 118 项测试通过；TypeScript/Vite、cargo check --locked、Rust release、PyInstaller 与 NSIS 构建通过。打包空配置六项自检、打包及安装后端进程检查、发行版与安装桌面各两次隔离生命周期检查通过。
+- 0.1.4 覆盖安装退出码 0；原任务、模型配置及套餐授权校验一致，安装后端与构建文件一致。之后将用户提供的 70 项 Cookie 加密导入并完成往返校验，移除本任务临时明文文件。安装清单见 testing/windows-installer-0.1.4.json。
+- 使用来自 www.douyin.com 的手动 Cookie（70 项、含登录标记）实测原主页和作品：链接解析通过，实际请求仍 HTTP 403 / gateway_signature_missing。作者、第二页和软件媒体获取尚未通过；见 testing/share-links-cookie-www-0.1.4.json。
+- 最终安装后端经私有 stdin 接收本机已保存登录状态，再分别检测两条链接，结果与源码一致；见 testing/installed-share-links-cookie-0.1.4.json。未把凭据放入命令参数、环境变量或报告。
+- 正常浏览器访问同一公开作品，标题及作者“开心锤锤”可见；DOM 记录 duration=150.166 秒、currentTime=68.036448 秒、readyState=4、paused=false。此为网页真实播放证据。页面使用 blob 媒体流，浏览器导出调用失败，没有取得可供 FFprobe 验证的文件，不能将播放替代采集验收。
+- 已再次阅读 F2 PR #446、MediaCrawler 380b426 及其他方案；参考依据与未采用项见 research/github-review.md。正常浏览器加载路径值得后续验证，尚未实现为可分发的采集适配器。本轮未调用大模型。
+
 ## 0.1.3 安装及复现复验（2026-11-10）
 
 - 修复版 NSIS 安装包构建完成并覆盖安装成功。原有 3 条任务、模型设置、独立套餐授权及 Cookie 状态均经更新前后校验保留；安装后端与构建文件一致。安装包校验见 testing/windows-installer-0.1.3.json。

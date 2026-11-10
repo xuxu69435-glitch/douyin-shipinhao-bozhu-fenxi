@@ -18,8 +18,9 @@ class CollectorError(RuntimeError):
 
 
 class CollectorAccessDenied(CollectorError):
-    def __init__(self, status_code):
+    def __init__(self, status_code, reason=None):
         self.status_code = status_code
+        self.reason = reason if reason in {"gateway_uifid_missing", "gateway_signature_missing"} else None
         super().__init__(f"抖音接口返回 HTTP {status_code}，请检查登录状态及访问权限")
 
 
@@ -153,7 +154,16 @@ class F2Collector:
         except ImportError as exc:
             raise CollectorError("F2未安装；请安装 backend[collector-f2]") from exc
         # Never auto-harvest browser cookies or print credentials.
-        return {"headers": dict(ClientConfManager.headers()), "cookie": self.cookie or "",
+        headers = dict(ClientConfManager.headers())
+        fields = {}
+        for part in (self.cookie or "").split("; "):
+            name, separator, value = part.partition("=")
+            if separator:
+                fields.setdefault(name, value)
+        uifid = fields.get("UIFID") or fields.get("UIFID_TEMP")
+        if uifid:
+            headers["uifid"] = uifid  # Real imported client identity; never a placeholder.
+        return {"headers": headers, "cookie": self.cookie or "",
                 "timeout": 12, "max_retries": 1}
 
     @asynccontextmanager
@@ -168,7 +178,19 @@ class F2Collector:
 
         async def response_guard(response):
             if response.status_code in (401, 403, 429):
-                raise CollectorAccessDenied(response.status_code)
+                reason = None
+                if response.status_code == 403:
+                    body = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        body.extend(chunk[:max(0, 4096 - len(body))])
+                        if len(body) >= 4096:
+                            break
+                    if b"ArgusSecurityPlugin" in body:
+                        if b"Uifid Not Found" in body:
+                            reason = "gateway_uifid_missing"
+                        elif b"Signature Not Found" in body:
+                            reason = "gateway_signature_missing"
+                raise CollectorAccessDenied(response.status_code, reason)
 
         async with DouyinCrawler(self._options()) as crawler:
             # F2 0.0.1.7 defaults to verify=False in its transport. Supply a

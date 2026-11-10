@@ -89,6 +89,11 @@ async def probe(text, allow_collection, cookie_file, scratch_dir, publish=lambda
         # Exception text may contain a signed CDN URL or Cookie. Keep only class/status.
         if status in (401, 403, 429):
             message = f"平台返回 HTTP {status}，当前访问未获准；尚未取得作者、作品或媒体证据"
+            reason = getattr(exc, "reason", None)
+            if reason in {"gateway_uifid_missing", "gateway_signature_missing"}:
+                report["access_denied_reason"] = reason
+                message = ("平台缺少客户端标识，当前采集请求未获准" if reason == "gateway_uifid_missing" else
+                           "平台要求网页生成的安全签名，当前采集接口尚未通过；保存 Cookie 不代表该签名已具备")
         else:
             message = f"检测未通过（{type(exc).__name__}），请检查网络、访问权限和本机依赖"
         report["error_code"] = f"HTTP_{status}" if isinstance(status, int) else type(exc).__name__

@@ -2,6 +2,21 @@
 
 Date: 2026-11-04. Research method: GitHub connector read of concrete source files, directory trees, issue #435, license files, repository HEADs; Douyin open platform and Tauri official docs. This is **source inspection**, not a claim that the remote projects were installed or executed locally.
 
+## Authenticated follow-up and normal page check — 2026-11-10
+
+Real probes with user-imported www.douyin.com cookies still receive HTTP 403. A bounded diagnostic classified the denial as a missing UIFID; supplying the actual imported UIFID changed it to a missing gateway signature. The adapter now forwards that real client identifier and exports only a fixed denial category. No response body or credential is retained in the record.
+
+| Reference | Inspected evidence | Decision and actual test boundary |
+| --- | --- | --- |
+| [F2 PR #446](https://github.com/Johnserf-Seed/f2/pull/446), against existing pinned 0.0.1.7 | Cookie-derived UIFID and additional gateway headers; reported downstream success | Supports diagnosis of the missing client field. Own adapter forwards the real UIFID; no upstream source copied. The installed SDK remains pinned. No claim that this PR alone solves the permitted collection path. |
+| [MediaCrawler commit 380b426](https://github.com/NanmiCoder/MediaCrawler/commit/380b426) | media_platform/douyin/client.py and its new tests; comment documents a fixed gateway value relying on absent value validation | Not adopted or executed. The fixed security placeholder conflicts with this project's access-control requirement. No source redistribution or dependency addition. Existing research table covers its license restrictions. |
+| [Douyin_TikTok_Download_API troubleshooting](https://github.com/Evil0ctal/Douyin_TikTok_Download_API/blob/main/documents/en/14-troubleshooting.md) and [deployment](https://github.com/Evil0ctal/Douyin_TikTok_Download_API/blob/main/docker/README.md) | Current documentation discusses identity pools, browser RPC, PostgreSQL/Redis and external browser components | Not installed or adopted in this follow-up. Its current service stack exceeds the agreed single-worker desktop scope; documentation is not proof that the user's samples pass. |
+| [Playwright network](https://playwright.dev/python/docs/network) and [browsers](https://playwright.dev/python/docs/browsers) | Official support for normal browser sessions and observed network responses | Research only; no Playwright runtime or stealth component added. A normal page-driven adapter remains a separate prototype requiring real pagination/media acceptance. |
+
+An actual normal browser navigation to the original public video rendered its correct title and creator, with playback progressing to 68.036448 seconds of 150.166 seconds (readyState 4, not paused). No account or cookie was imported into that browser session. Browser media export failed on the blob-backed stream; no downloaded file or second-page acceptance follows from this observation.
+
+The real browser header also contains one nameless cookie entry. The parser now preserves it in place while still requiring named entries, rejecting control characters and response attributes, and checking names. This follows the browser serialization behavior described in [HTTPbis cookie draft, section 5.8.3](https://httpwg.org/http-extensions/draft-ietf-httpbis-rfc6265bis.html#section-5.8.3); it is a draft, not a claim of a newly published RFC. Synthetic tests use unrelated fixture values.
+
 ## Cookie import and transport follow-up — 2026-11-09
 
 F2 0.0.1.7 source confirms that its crawler forwards the supplied cookie, but its default HTTP transport uses verify=False and its logger creates files containing request URLs. The application now supplies a verified HTTPS client, enforces www.douyin.com on each request, stops on 401/403/429, and suppresses SDK logs. The private lazy-client injection is specific to pinned 0.0.1.7 and covered by origin/credential regression tests. No new upstream source was copied. Direct ID extraction avoids an unnecessary anonymous page fetch while author ownership still requires real data.

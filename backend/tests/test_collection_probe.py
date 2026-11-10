@@ -45,6 +45,16 @@ def test_profile_id_in_url_does_not_verify_author_or_second_page(tmp_path):
     assert "author_id" not in result and not result["complete"]
 
 
+def test_gateway_reason_is_classified_without_exposing_response(tmp_path):
+    from app.collector import CollectorAccessDenied
+    class Denied:
+        async def video_detail(self, url):
+            raise CollectorAccessDenied(403, 'gateway_signature_missing')
+    result = asyncio.run(probe(VIDEO, True, '', tmp_path, collector=Denied()))
+    assert result['access_denied_reason'] == 'gateway_signature_missing'
+    assert result['error_code'] == 'HTTP_403' and not result['complete']
+
+
 def test_real_media_validation_is_required_and_report_excludes_signed_url(tmp_path, monkeypatch):
     from app import collection_probe
     sample = VideoCandidate("7699679130752748809", "creator", "fixture", None, VIDEO,

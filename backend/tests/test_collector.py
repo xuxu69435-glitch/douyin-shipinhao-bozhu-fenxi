@@ -58,7 +58,7 @@ def test_error_status_not_success():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('mode', ['ok', 'denied', 'offsite'])
+@pytest.mark.parametrize('mode', ['ok', 'denied', 'offsite', 'gateway_uifid_missing', 'gateway_signature_missing'])
 async def test_sdk_client_verifies_tls_and_keeps_cookie_on_douyin_only(monkeypatch, mode):
     import sys
     from types import SimpleNamespace
@@ -81,6 +81,9 @@ async def test_sdk_client_verifies_tls_and_keeps_cookie_on_douyin_only(monkeypat
         requests.append(request)
         if mode == 'denied':
             return httpx.Response(403, text='fixture-sensitive-response')
+        if mode.startswith('gateway_'):
+            detail = 'Uifid Not Found' if mode == 'gateway_uifid_missing' else 'Signature Not Found'
+            return httpx.Response(403, text='Blocked by ArgusSecurityPlugin ' + detail + ' fixture-sensitive-response')
         if mode == 'offsite':
             return httpx.Response(302, headers={'location': 'https://example.invalid/steal'})
         return httpx.Response(200, json={'status_code': 0})
@@ -96,7 +99,25 @@ async def test_sdk_client_verifies_tls_and_keeps_cookie_on_douyin_only(monkeypat
             with pytest.raises(CollectorError) as error:
                 await sdk._aclient.get('https://www.douyin.com/aweme/v1/web/test/', follow_redirects=True)
             assert 'fixture-cookie' not in str(error.value) and 'fixture-sensitive' not in str(error.value)
-            if mode == 'denied':
+            if mode == 'denied' or mode.startswith('gateway_'):
                 assert isinstance(error.value, CollectorAccessDenied) and error.value.status_code == 403
+                assert error.value.reason == (mode if mode.startswith('gateway_') else None)
     assert len(requests) == 1
     assert requests[0].headers['cookie'] == 'sessionid=fixture-cookie'
+
+
+@pytest.mark.parametrize('cookie,expected', [
+    ('sessionid=fixture; UIFID=real-fixture-id; UIFID_TEMP=temporary-fixture', 'real-fixture-id'),
+    ('sessionid=fixture; UIFID_TEMP=temporary-fixture', 'temporary-fixture'),
+    ('sessionid=fixture; UIFID', None),
+])
+def test_client_identifier_uses_only_real_imported_value(monkeypatch, cookie, expected):
+    import sys
+    from types import SimpleNamespace
+    from app.collector import F2Collector
+    monkeypatch.setitem(sys.modules, 'f2.apps.douyin.utils', SimpleNamespace(
+        ClientConfManager=SimpleNamespace(headers=lambda: {'User-Agent': 'fixture-agent'})))
+    options = F2Collector(cookie)._options()
+    assert options['headers'].get('uifid') == expected
+    assert 'x-tt-argus' not in options['headers']
+    assert options['cookie'] == cookie

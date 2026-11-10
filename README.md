@@ -9,7 +9,7 @@ Windows 本地桌面应用：Tauri 2 + React + Python 3.12 / FastAPI + SQLite，
 安装程序生成于：
 
 ```text
-frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.3_x64-setup.exe
+frontend/src-tauri/target/release/bundle/nsis/Douyin Analyst_0.1.4_x64-setup.exe
 ```
 
 启动应用，打开左侧 **模型与采集设置**：

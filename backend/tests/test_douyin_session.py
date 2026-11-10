@@ -26,6 +26,13 @@ def test_metadata_handles_opaque_values_without_losing_login_marker():
     }
 
 
+def test_nameless_browser_cookie_is_preserved_and_not_treated_as_login():
+    cookie = 'theme=dark; unnamed-fixture; sessionid=fixture-private'
+    assert normalize_cookie(cookie) == cookie
+    assert cookie_metadata(cookie) == {'cookie_count': 3, 'login_marker_present': True}
+    assert cookie_metadata('sessionid; theme=dark') == {'cookie_count': 2, 'login_marker_present': False}
+
+
 @pytest.mark.parametrize('text', ['', 'fixture-without-equals', 'sessionid=fixture\r\nX-Header: injected',
                                   '{"sessionid":"fixture"}', 'sessionid=中文', 'name=' + 'x' * 65536,
                                   'sessionid=fixture; HttpOnly', 'bad name=fixture'],
@@ -70,10 +77,10 @@ def test_import_api_rejects_without_leaking_body(client, auth):
 
 @pytest.mark.skipif(os.name != 'nt', reason='Windows DPAPI')
 def test_import_save_read_and_clear_do_not_reveal_cookie(client, auth, tmp_path):
-    cookie = 'prefs={"volume":0.5}; theme=dark; theme=light; sessionid=fixture-private'
+    cookie = 'prefs={"volume":0.5}; theme=dark; theme=light; unnamed-fixture; sessionid=fixture-private'
     response = client.post('/api/douyin/session', headers=auth, json={'cookie': cookie})
     assert response.status_code == 200 and response.json()['configured']
-    assert response.json()['cookie_count'] == 4 and response.json()['login_marker_present']
+    assert response.json()['cookie_count'] == 5 and response.json()['login_marker_present']
     assert load_cookie(tmp_path) == cookie
     assert 'fixture-private' not in response.text
     assert 'fixture-private' not in client.get('/api/douyin/session', headers=auth).text
