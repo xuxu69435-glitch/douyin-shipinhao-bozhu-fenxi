@@ -2,6 +2,15 @@
 
 范围：仅抖音，Windows本地Tauri 2桌面应用。**“代码已实现”≠“真实抖音通过”≠“Windows安装包通过”。**
 
+## 0.1.3 安装及复现复验（2026-11-10）
+
+- 修复版 NSIS 安装包构建完成并覆盖安装成功。原有 3 条任务、模型设置、独立套餐授权及 Cookie 状态均经更新前后校验保留；安装后端与构建文件一致。安装包校验见 testing/windows-installer-0.1.3.json。
+- 打包及安装后端均通过合成 Cookie 导入、DPAPI 加密、重启读取和清除；安装版在仅含 Windows System32 的 PATH 下完成空配置六项自检，不依赖构建机的 Python、Node 或 FFmpeg PATH。
+- 发行版及安装桌面各两次隔离生命周期检查通过：认证代理、内置媒体工具、合成媒体 Range、历史持久化及退出后的进程树清理。见 testing/release-desktop-0.1.3-smoke.json 和 testing/installed-desktop-0.1.3-smoke.json；不代表 WebView 实际播放已验收。
+- 独立检出 `11ffb42`、独立 Python 虚拟环境及新 npm 安装完成 111 项后端测试、前端构建与六项空配置自检。仍为同一 Windows 机器，不冒充另一台机器的实测。
+- 该独立环境也完成 PyInstaller 后端打包，生成产物通过六项空配置检查及后端进程复验；见 testing/fresh-checkout-packaged-0.1.3.json 和 testing/fresh-checkout-packaged-backend-0.1.3-smoke.json。确认此后端构建没有依赖主开发虚拟环境中额外安装的组件。
+- 已成功加密保存手动导入的真实 Cookie（用户报告来源为 imapi.douyin.com），发现常见登录标记。用此状态分别实测原主页与作品短链，解析通过，作品接口均仍返回 HTTP 403；见 testing/share-links-cookie-0.1.3.json。尚未获得作者、第二页或媒体证据，继续核对 www.douyin.com 请求来源及当前接口适配。本轮没有调用大模型。
+
 ## 0.1.3 登录状态导入与独立复现（2026-11-09）
 
 - 支持在设置中手动粘贴单行 Cookie 并用 Windows DPAPI 加密保存，只回显项数及登录标记状态；支持清除，也兼容带 UTF-8 BOM 或 Cookie: 前缀的原文件。不会自动读取浏览器资料。

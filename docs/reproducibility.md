@@ -68,4 +68,8 @@ FFmpeg 和 FFprobe 必须在构建机 PATH 中可用，打包脚本会将它们�
 
 ## 已执行的独立检查
 
-在同一 Windows 机器的新检出目录、独立 Python 虚拟环境、全新 npm 依赖中，按锁文件安装 81 项 Python 依赖，完成 104 项后端测试、官方登录 SDK 的 56 项测试（1 项 Unix 权限测试跳过）、前端构建及空配置六项自检。此记录对应 `74a79f8`，见 [空配置结果](testing/fresh-checkout-clean-data-0.1.3.json)。后续 Cookie 解析修复在主工作目录的后端测试为 111 项；两类结果分别记录，不能将同机新环境检查等同于另一台机器验收。
+在同一 Windows 机器的新检出目录、独立 Python 虚拟环境、全新 npm 依赖中，按锁文件安装 81 项 Python 依赖。最初检出 `74a79f8` 完成 104 项后端测试、官方登录 SDK 的 56 项测试（1 项 Unix 权限测试跳过）、前端构建及空配置六项自检；更新至 Cookie 解析修复 `11ffb42` 后，111 项后端测试、前端构建及六项自检通过，见 [空配置结果](testing/fresh-checkout-clean-data-0.1.3.json)。不能将同机新环境检查等同于另一台机器验收。
+
+最终安装版在仅含 Windows System32 的 PATH 下六项自检通过，见 [安装版结果](testing/installed-clean-data-0.1.3.json)。这能检查安装资源是否自包含；抖音访问和真实模型仍须每个人独立接入后验证。
+
+上述独立环境也按脚本构建了 PyInstaller 后端，生成产物的[六项自检](testing/fresh-checkout-packaged-0.1.3.json)及[后端进程检查](testing/fresh-checkout-packaged-backend-0.1.3-smoke.json)通过。没有在该检出目录重复生成完整 NSIS 安装包，不能将后端打包记录等同于整套安装程序的第二次独立构建。

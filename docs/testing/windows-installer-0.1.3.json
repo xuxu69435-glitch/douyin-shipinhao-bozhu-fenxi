@@ -1,0 +1,12 @@
+{
+  "version": "0.1.3",
+  "date": "2026-11-10",
+  "size_bytes": 302163699,
+  "sha256": "4fc3157003a697c6abd400c48e6ad38a8cf3a049e98960fd2e45a0912596fe46",
+  "silent_install_exit_code": 0,
+  "previous_tasks_preserved": true,
+  "settings_preserved": true,
+  "chatgpt_authorization_preserved": true,
+  "cookie_state_preserved": true,
+  "installed_backend_matches_build": true
+}

@@ -1,0 +1,82 @@
+{
+  "context": {
+    "date": "2026-11-10",
+    "cookie_source_host_reported_by_user": "imapi.douyin.com",
+    "cookie_values_recorded": false,
+    "model_called": false
+  },
+  "profile": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "blocked",
+        "message": "主页地址已解析，但尚未从真实作品验证作者归属"
+      },
+      {
+        "name": "works",
+        "status": "blocked",
+        "message": "平台返回 HTTP 403，当前访问未获准；尚未取得作者、作品或媒体证据"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "media",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/user/MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "source_kind": "profile",
+    "platform_id": "MS4wLjABAAAAoDPbeBJwY9IpoMFWKaDAPR7WXPset_2zjILeb65yPeg",
+    "access_mode": "user_imported_cookie",
+    "error_code": "HTTP_403"
+  },
+  "video": {
+    "test_type": "real_network",
+    "model_called": false,
+    "complete": false,
+    "steps": [
+      {
+        "name": "link",
+        "status": "passed",
+        "message": "分享地址已解析"
+      },
+      {
+        "name": "author",
+        "status": "blocked",
+        "message": "平台返回 HTTP 403，当前访问未获准；尚未取得作者、作品或媒体证据"
+      },
+      {
+        "name": "works",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "page2",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      },
+      {
+        "name": "media",
+        "status": "skipped",
+        "message": "前置步骤未通过，未执行"
+      }
+    ],
+    "resolved_url": "https://www.douyin.com/video/7699679130752748809",
+    "source_kind": "video",
+    "platform_id": "7699679130752748809",
+    "access_mode": "user_imported_cookie",
+    "error_code": "HTTP_403"
+  }
+}

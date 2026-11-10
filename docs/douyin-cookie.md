@@ -6,7 +6,7 @@
 
 1. 用 Edge 或 Chrome 打开 [抖音网页版](https://www.douyin.com/)，登录自己的账号。打开目标博主主页或作品，先确认浏览器能正常显示、播放。
 2. 按 **F12** 打开开发者工具，切换至 **Network / 网络**。保持开发者工具打开，刷新抖音页面；若没有作品请求，可播放作品或向下滚动主页。
-3. 选择 **Fetch/XHR**，点击作品请求，例如 `feed`，或筛选 `aweme` / `post`。**Name 列通常只显示请求名称，不会直接显示域名**；点击后在 **Headers / 标头 → General / 常规 → Request URL / 请求网址** 中，确认地址以 `https://www.douyin.com/` 开头。不要选视频 CDN、图片或广告请求。
+3. 选择 **Fetch/XHR**，在筛选框输入 `domain:www.douyin.com`，刷新后点击作品请求，例如 `feed`、`aweme` / `post` / `detail`。**Name 列通常只显示请求名称，不会直接显示域名**；点击后在 **Headers / 标头 → General / 常规 → Request URL / 请求网址** 中，确认地址以 `https://www.douyin.com/` 开头。不要选 `imapi.douyin.com` 消息接口、视频 CDN、图片或广告请求；同属抖音的不同子域请求所携带的 Cookie 可能不同。
 4. 点击该请求 → **Headers / 标头** → **Request Headers / 请求标头**，找到 **Cookie**。
 5. 复制 Cookie 的**值**。正确内容通常是 `名称=值; 名称2=值2` 这样的单行文本。不要复制 Response Headers 中的 `Set-Cookie`，不要复制整段 cURL、JSON 或全部请求标头。软件也接受以 `Cookie:` 开头的单行文本。
 
